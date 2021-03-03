@@ -1,0 +1,19 @@
+{
+  "clangd": {
+    "arguments": [
+      "--compile-commands-dir=build"
+    ],
+    "onConfigChanged": "restart"
+  },
+  "cmake": {
+    "configureOnOpen": true,
+    "generator": "Unix Makefiles"
+  },
+  "editor": {
+    "formatOnSave": true,
+    "formatOnType": true,
+    "rulers": [
+      80
+    ]
+  }
+}

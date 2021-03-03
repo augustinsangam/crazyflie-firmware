@@ -1,0 +1,4 @@
+[submodule "cf_fw"]
+	branch = ultimate
+	path = cf_fw
+	url = https://github.com/concatime/crazyflie-firmware.git

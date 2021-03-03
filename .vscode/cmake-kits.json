@@ -1,0 +1,10 @@
+[
+  {
+    "name": "STM32F4 - Clang",
+    "toolchainFile": "./stm32f4-clang.cmake"
+  },
+  {
+    "name": "STM32F4 - GCC",
+    "toolchainFile": "./stm32f4-gcc.cmake"
+  }
+]
