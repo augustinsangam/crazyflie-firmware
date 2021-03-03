@@ -1,0 +1,8 @@
+BasedOnStyle: LLVM
+
+AccessModifierOffset: -4
+AllowShortLoopsOnASingleLine: true
+IndentPPDirectives: AfterHash
+IndentWidth: 4
+TabWidth: 4
+UseTab: ForIndentation
