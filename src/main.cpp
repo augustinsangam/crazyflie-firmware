@@ -13,7 +13,10 @@ extern "C" {
 #include <task.h> /* vTaskDelay */
 }
 
+#include <string>
+
 void appMain() {
+	std::string s;
 	DEBUG_PRINT("Waiting for activation ...\n");
 
 	for (;;) {

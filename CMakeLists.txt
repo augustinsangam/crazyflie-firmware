@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(cf VERSION 2021.1 LANGUAGES ASM C CXX)
+project(cf VERSION 2021.1 LANGUAGES C CXX)
 
 # https://github.com/ARM-software/CMSIS_5/commit/9b5b7561f98cb39f5407959d99c98bdd6eb0fa78
 # https://github.com/ARM-software/CMSIS_5/commit/f46ec37262bc4fd82b6c91d24198cc3b4a499fe3
@@ -37,7 +37,7 @@ add_custom_command(
 	        "${CMAKE_CURRENT_BINARY_DIR}/version.c"
 	WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cf_fw")
 add_custom_target(version_c DEPENDS "version.c")
-	
+
 add_custom_command(
 	OUTPUT "${OUTPUT_NAME}.bin"
 	COMMAND "${CMAKE_OBJCOPY}"
@@ -336,7 +336,7 @@ target_sources(arm_math PRIVATE
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_q7_to_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_q7_to_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_bitreversal.c"
-	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_bitreversal2.S"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_bitreversal2.c" # .S not needed
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_cfft_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_cfft_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_cfft_q31.c"
