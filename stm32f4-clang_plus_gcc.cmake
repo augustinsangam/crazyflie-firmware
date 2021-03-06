@@ -9,14 +9,20 @@ if(NOT DEFINED GCC_VERSION)
 endif()
 
 # Clang
+set(CMAKE_ASM_COMPILER clang)
 set(CMAKE_C_COMPILER clang)
 set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_ASM_FLAGS "-Wno-unused-command-line-argument")
 set(CMAKE_CXX_FLAGS "-stdlib=libstdc++ -isystem /usr/include/newlib/c++/${GCC_VERSION}/${triple}/${multi}")
 # GCC
+#set(CMAKE_ASM_COMPILER "${triple}-gcc")
 #set(CMAKE_C_COMPILER "${triple}-gcc")
 #set(CMAKE_CXX_COMPILER "${triple}-g++")
+#set(CMAKE_ASM_FLAGS "-mfp16-format=ieee")
 #set(CMAKE_C_FLAGS "-mfp16-format=ieee")
+#set(CMAKE_CXX_FLAGS "-mfp16-format=ieee")
 
+set(CMAKE_ASM_COMPILER_TARGET "${triple}")
 set(CMAKE_C_COMPILER_TARGET "${triple}")
 set(CMAKE_CXX_COMPILER_TARGET "${triple}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fshort-enums")

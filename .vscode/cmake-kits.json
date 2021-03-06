@@ -1,11 +1,7 @@
 [
   {
-    "name": "STM32F4",
-    "toolchainFile": "./stm32f4-bastard.cmake"
-  },
-  {
-    "name": "STM32F4 - Clang",
-    "toolchainFile": "./stm32f4-clang.cmake"
+    "name": "STM32F4 - Clang + GCC",
+    "toolchainFile": "./stm32f4-clang_plus_gcc.cmake"
   },
   {
     "name": "STM32F4 - GCC",

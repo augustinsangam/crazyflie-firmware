@@ -3,6 +3,7 @@ string(REPLACE ";" "-" triple "${triple}")
 
 set(CMAKE_SYSROOT "/usr/lib/${triple}")
 
+set(CMAKE_ASM_COMPILER "${triple}-gcc")
 set(CMAKE_C_COMPILER "${triple}-gcc")
 set(CMAKE_CXX_COMPILER "${triple}-g++")
 

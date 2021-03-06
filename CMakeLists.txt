@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(cf VERSION 2021.1 LANGUAGES C CXX)
-
-# https://github.com/ARM-software/CMSIS_5/commit/9b5b7561f98cb39f5407959d99c98bdd6eb0fa78
-# https://github.com/ARM-software/CMSIS_5/commit/f46ec37262bc4fd82b6c91d24198cc3b4a499fe3
+project(cf VERSION 2021.1 LANGUAGES ASM C CXX)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
@@ -82,11 +79,12 @@ endif()
 #################################### VENDOR ####################################
 
 add_library(common INTERFACE)
-target_include_directories(common INTERFACE "./cf_fw/src/config")
 target_compile_options(common INTERFACE
 	"-fno-math-errno" "-fno-strict-aliasing"
-	"-ffunction-sections" "-fdata-sections")
+	"-ffunction-sections" "-fdata-sections"
+	"-Wno-address-of-packed-member")
 target_link_options(common INTERFACE "LINKER:--gc-sections")
+target_include_directories(common INTERFACE "./cf_fw/src/config")
 
 add_library(cmsis INTERFACE)
 target_include_directories(cmsis INTERFACE "./cf_fw/vendor/CMSIS/CMSIS/Core/Include")
@@ -94,6 +92,7 @@ target_include_directories(cmsis INTERFACE "./cf_fw/vendor/CMSIS/CMSIS/Core/Incl
 add_library(arm_math STATIC)
 target_link_libraries(arm_math PRIVATE common cmsis)
 target_include_directories(arm_math PUBLIC "./cf_fw/vendor/CMSIS/CMSIS/DSP/Include")
+target_include_directories(arm_math PRIVATE "./cf_fw/vendor/CMSIS/CMSIS/DSP/PrivateInclude")
 target_sources(arm_math PRIVATE
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_abs_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_abs_q15.c"
@@ -103,6 +102,9 @@ target_sources(arm_math PRIVATE
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_add_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_add_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_add_q7.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_and_u16.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_and_u32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_and_u8.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_dot_prod_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_dot_prod_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_dot_prod_q31.c"
@@ -115,10 +117,16 @@ target_sources(arm_math PRIVATE
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_negate_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_negate_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_negate_q7.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_not_u16.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_not_u32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_not_u8.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_offset_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_offset_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_offset_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_offset_q7.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_or_u16.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_or_u32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_or_u8.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_scale_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_scale_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_scale_q31.c"
@@ -130,8 +138,13 @@ target_sources(arm_math PRIVATE
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_sub_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_sub_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_sub_q7.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_xor_u16.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_xor_u32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BasicMathFunctions/arm_xor_u8.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/BayesFunctions/arm_gaussian_naive_bayes_predict_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/CommonTables/arm_common_tables.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/CommonTables/arm_const_structs.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/CommonTables/arm_mve_tables.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/ComplexMathFunctions/arm_cmplx_conj_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/ComplexMathFunctions/arm_cmplx_conj_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/ComplexMathFunctions/arm_cmplx_conj_q31.c"
@@ -158,6 +171,25 @@ target_sources(arm_math PRIVATE
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/ControllerFunctions/arm_pid_reset_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/ControllerFunctions/arm_sin_cos_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/ControllerFunctions/arm_sin_cos_q31.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_boolean_distance.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_braycurtis_distance_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_canberra_distance_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_chebyshev_distance_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_cityblock_distance_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_correlation_distance_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_cosine_distance_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_dice_distance.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_euclidean_distance_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_hamming_distance.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_jaccard_distance.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_jensenshannon_distance_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_kulsinski_distance.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_minkowski_distance_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_rogerstanimoto_distance.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_russellrao_distance.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_sokalmichener_distance.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_sokalsneath_distance.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/DistanceFunctions/arm_yule_distance.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/FastMathFunctions/arm_cos_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/FastMathFunctions/arm_cos_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/FastMathFunctions/arm_cos_q31.c"
@@ -166,6 +198,8 @@ target_sources(arm_math PRIVATE
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/FastMathFunctions/arm_sin_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/FastMathFunctions/arm_sqrt_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/FastMathFunctions/arm_sqrt_q31.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/FastMathFunctions/arm_vexp_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/FastMathFunctions/arm_vlog_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_32x64_init_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_32x64_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/FilteringFunctions/arm_biquad_cascade_df1_f32.c"
@@ -290,7 +324,14 @@ target_sources(arm_math PRIVATE
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/MatrixFunctions/arm_mat_trans_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/MatrixFunctions/arm_mat_trans_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/MatrixFunctions/arm_mat_trans_q31.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_entropy_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_entropy_f64.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_kullback_leibler_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_kullback_leibler_f64.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_logsumexp_dot_prod_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_logsumexp_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_max_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_max_no_idx_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_max_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_max_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_max_q7.c"
@@ -315,6 +356,9 @@ target_sources(arm_math PRIVATE
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_var_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_var_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/StatisticsFunctions/arm_var_q31.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_barycenter_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_bitonic_sort_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_bubble_sort_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_copy_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_copy_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_copy_q31.c"
@@ -326,6 +370,10 @@ target_sources(arm_math PRIVATE
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_float_to_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_float_to_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_float_to_q7.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_heap_sort_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_insertion_sort_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_merge_sort_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_merge_sort_init_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_q15_to_float.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_q15_to_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_q15_to_q7.c"
@@ -335,9 +383,29 @@ target_sources(arm_math PRIVATE
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_q7_to_float.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_q7_to_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_q7_to_q31.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_quick_sort_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_selection_sort_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_sort_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_sort_init_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_spline_interp_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_spline_interp_init_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SupportFunctions/arm_weighted_sum_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SVMFunctions/arm_svm_linear_init_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SVMFunctions/arm_svm_linear_predict_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SVMFunctions/arm_svm_polynomial_init_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SVMFunctions/arm_svm_polynomial_predict_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SVMFunctions/arm_svm_rbf_init_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SVMFunctions/arm_svm_rbf_predict_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SVMFunctions/arm_svm_sigmoid_init_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/SVMFunctions/arm_svm_sigmoid_predict_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_bitreversal2.S" # or .c
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_bitreversal.c"
-	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_bitreversal2.c" # .S not needed
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_cfft_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_cfft_f64.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_f64.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_q15.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_cfft_init_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_cfft_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_cfft_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_cfft_radix2_f32.c"
@@ -361,7 +429,9 @@ target_sources(arm_math PRIVATE
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_dct4_q31.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_rfft_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_rfft_fast_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_rfft_fast_f64.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_rfft_fast_init_f32.c"
+	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_rfft_fast_init_f64.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_f32.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_q15.c"
 	"./cf_fw/vendor/CMSIS/CMSIS/DSP/Source/TransformFunctions/arm_rfft_init_q31.c"
@@ -407,7 +477,9 @@ set_target_properties(cf2 PROPERTIES
 	SUFFIX ".elf")
 
 add_dependencies(cf2 version_c)
-target_link_libraries(cf2 PRIVATE common arm_math cmsis dw1000 stm32f4xx)
+target_link_libraries(cf2 PRIVATE common cmsis)
+target_link_libraries(cf2 PRIVATE arm_math dw1000 stm32f4xx)
+target_link_libraries(cf2 PRIVATE m)
 
 target_include_directories(cf2 PRIVATE
 	"./cf_fw/vendor/FreeRTOS/include"
@@ -468,7 +540,9 @@ target_sources(cf2 PRIVATE
 	"./cf_fw/src/utils/src/clockCorrectionEngine.c"
 	"./cf_fw/src/utils/src/configblockeeprom.c"
 	"./cf_fw/src/utils/src/cpuid.c"
-	"./cf_fw/src/utils/src/crc32.c"
+	"./cf_fw/src/utils/src/crc.c" # TODO: remove in next release
+#	"./cf_fw/src/utils/src/crc32.c"
+	"./cf_fw/src/utils/src/crc_bosch.c" # TODO: remove in next release
 	"./cf_fw/src/utils/src/debug.c"
 	"./cf_fw/src/utils/src/eprintf.c"
 	"./cf_fw/src/utils/src/filter.c"
@@ -592,20 +666,20 @@ target_include_directories(cf2 PRIVATE
 	"./cf_fw/src/modules/interface/kalman_core"
 	"./cf_fw/src/modules/interface/lighthouse")
 target_sources(cf2 PRIVATE
-	"./cf_fw/src/modules/src/kalman_core/kalman_core.c"
-	"./cf_fw/src/modules/src/kalman_core/mm_absolute_height.c"
-	"./cf_fw/src/modules/src/kalman_core/mm_distance.c"
-	"./cf_fw/src/modules/src/kalman_core/mm_flow.c"
-	"./cf_fw/src/modules/src/kalman_core/mm_pose.c"
-	"./cf_fw/src/modules/src/kalman_core/mm_position.c"
-	"./cf_fw/src/modules/src/kalman_core/mm_sweep_angles.c"
-	"./cf_fw/src/modules/src/kalman_core/mm_tdoa.c"
-	"./cf_fw/src/modules/src/kalman_core/mm_tof.c"
-	"./cf_fw/src/modules/src/kalman_core/mm_yaw_error.c"
+#	"./cf_fw/src/modules/src/kalman_core/kalman_core.c"
+#	"./cf_fw/src/modules/src/kalman_core/mm_absolute_height.c"
+#	"./cf_fw/src/modules/src/kalman_core/mm_distance.c"
+#	"./cf_fw/src/modules/src/kalman_core/mm_flow.c"
+#	"./cf_fw/src/modules/src/kalman_core/mm_pose.c"
+#	"./cf_fw/src/modules/src/kalman_core/mm_position.c"
+#	"./cf_fw/src/modules/src/kalman_core/mm_sweep_angles.c"
+#	"./cf_fw/src/modules/src/kalman_core/mm_tdoa.c"
+#	"./cf_fw/src/modules/src/kalman_core/mm_tof.c"
+#	"./cf_fw/src/modules/src/kalman_core/mm_yaw_error.c"
 	"./cf_fw/src/modules/src/lighthouse/lighthouse_core.c"
 	"./cf_fw/src/modules/src/lighthouse/lighthouse_deck_flasher.c"
 	"./cf_fw/src/modules/src/lighthouse/lighthouse_position_est.c"
-	"./cf_fw/src/modules/src/lighthouse/lighthouse_storage.c"
+#	"./cf_fw/src/modules/src/lighthouse/lighthouse_storage.c"
 	"./cf_fw/src/modules/src/app_channel.c"
 	"./cf_fw/src/modules/src/app_handler.c"
 	"./cf_fw/src/modules/src/attitude_pid_controller.c"
@@ -628,7 +702,8 @@ target_sources(cf2 PRIVATE
 	"./cf_fw/src/modules/src/estimator_complementary.c"
 	"./cf_fw/src/modules/src/estimator_kalman.c"
 	"./cf_fw/src/modules/src/extrx.c"
-	"./cf_fw/src/modules/src/health.c"
+#	"./cf_fw/src/modules/src/health.c"
+	"./cf_fw/src/modules/src/kalman_core.c" # TODO: remove in next release
 	"./cf_fw/src/modules/src/kalman_supervisor.c"
 	"./cf_fw/src/modules/src/log.c"
 	"./cf_fw/src/modules/src/mem.c"
