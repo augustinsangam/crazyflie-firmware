@@ -43,7 +43,7 @@ add_custom_command(
 	        --remove-section=._usrstack --remove-section=.bss --remove-section=.nzds
 	        "$<TARGET_FILE:cf2>" "${OUTPUT_NAME}.bin"
 	DEPENDS cf2)
-add_custom_target(cf2_bin DEPENDS "${OUTPUT_NAME}.bin")
+add_custom_target(cf2_bin ALL DEPENDS "${OUTPUT_NAME}.bin")
 
 if(CLOAD)
 	add_custom_target(cload
@@ -786,4 +786,4 @@ target_sources(cf2 PRIVATE
 
 target_include_directories(cf2 PRIVATE "./include")
 target_sources(cf2 PRIVATE
-	"./src/main.cpp")
+	"./src/main.c")
