@@ -17,4 +17,6 @@ RUN apt-get install -y \
 
 WORKDIR /build
 
-CMD cmake -D CMAKE_BUILD_TYPE=MinSizeRel -D CMAKE_TOOLCHAIN_FILE=stm32f4-gcc.cmake /firmware && make
+CMD cmake -D CMAKE_BUILD_TYPE=MinSizeRel -D CMAKE_TOOLCHAIN_FILE=stm32f4-gcc.cmake /firmware && \
+	make -j "$(nproc)" && \
+	cp cf2.bin /out
