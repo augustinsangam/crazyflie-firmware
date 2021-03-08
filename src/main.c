@@ -58,16 +58,16 @@ struct testPacketRX
 
 struct testPacketTX
 {
-  float speed;
-  float battery;
-  bool flying;
-  bool ledOn;
-
   uint16_t front;
   uint16_t left;
   uint16_t back;
   uint16_t right;
   uint16_t up;
+
+  float speed;
+  float battery;
+  bool flying;
+  bool ledOn;
 
 } __attribute__((packed));
 
