@@ -81,16 +81,31 @@ endif()
 add_library(common INTERFACE)
 target_compile_options(common INTERFACE
 	"-fno-math-errno" "-fno-strict-aliasing"
-	"-ffunction-sections" "-fdata-sections"
-	"-Wno-address-of-packed-member")
+	"-ffunction-sections" "-fdata-sections")
 target_link_options(common INTERFACE "LINKER:--gc-sections")
 target_include_directories(common INTERFACE "./cf_fw/src/config")
+
+add_library(warnings INTERFACE)
+if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Debug")
+	target_compile_options(warnings INTERFACE "-Wall" "-Wextra" "-Wpedantic")
+	target_compile_options(warnings INTERFACE
+		"-Wcast-qual"
+		"-Wconversion"
+		"-Wdouble-promotion"
+		"-Wformat=2"
+		"-Wmissing-declarations"
+		"-Wshadow"
+		"-Wstrict-overflow")
+	target_compile_options(warnings INTERFACE
+		"-Wno-address-of-packed-member")
+endif()
 
 add_library(cmsis INTERFACE)
 target_include_directories(cmsis INTERFACE "./cf_fw/vendor/CMSIS/CMSIS/Core/Include")
 
 add_library(arm_math STATIC)
-target_link_libraries(arm_math PRIVATE common cmsis)
+target_link_libraries(arm_math PRIVATE common)
+target_link_libraries(arm_math PRIVATE cmsis)
 target_include_directories(arm_math PUBLIC "./cf_fw/vendor/CMSIS/CMSIS/DSP/Include")
 target_include_directories(arm_math PRIVATE "./cf_fw/vendor/CMSIS/CMSIS/DSP/PrivateInclude")
 target_sources(arm_math PRIVATE
@@ -445,7 +460,7 @@ target_sources(dw1000 PRIVATE
 	"./cf_fw/vendor/libdw1000/src/libdw1000Spi.c")
 
 add_library(stm32f4xx STATIC)
-target_link_libraries(stm32f4xx PRIVATE common cmsis)
+target_link_libraries(stm32f4xx PRIVATE common cmsis warnings)
 target_compile_definitions(stm32f4xx PUBLIC
 	HSE_VALUE=8000000
 	STM32F4XX
@@ -477,7 +492,8 @@ set_target_properties(cf2 PROPERTIES
 	SUFFIX ".elf")
 
 add_dependencies(cf2 version_c)
-target_link_libraries(cf2 PRIVATE common cmsis)
+target_link_libraries(cf2 PRIVATE common warnings)
+target_link_libraries(cf2 PRIVATE cmsis)
 target_link_libraries(cf2 PRIVATE arm_math dw1000 stm32f4xx)
 target_link_libraries(cf2 PRIVATE m)
 
