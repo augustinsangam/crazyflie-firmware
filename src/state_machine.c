@@ -16,6 +16,7 @@
 #include "log.h"
 #include "param.h"
 #include "system.h"
+#include <led.h>
 
 #include "commander.h"
 #include "sensors.h"
@@ -46,9 +47,9 @@ float height;
 static bool taken_off = false;
 static float nominal_height = 0.3;
 
-// Switch to multiple methods, that increases in complexity 
-//1= wall_following: Go forward and follow walls with the multiranger 
-//2=wall following with avoid: This also follows walls but will move away if another crazyflie with an lower ID is coming close, 
+// Switch to multiple methods, that increases in complexity
+//1= wall_following: Go forward and follow walls with the multiranger
+//2=wall following with avoid: This also follows walls but will move away if another crazyflie with an lower ID is coming close,
 //3=SGBA: The SGBA method that incorperates the above methods.
 //        NOTE: the switching between outbound and inbound has not been implemented yet
 #define METHOD 1
@@ -181,8 +182,18 @@ static int32_t find_minimum(uint8_t a[], int32_t n)
     return (number);
 
 }*/
+
+#include "led.h"
+
 void appMain(void *param)
 {
+	for (int i = 0; i < 5; i++) {
+		ledClearAll();
+		vTaskDelay(M2T(2000));
+		ledSetAll();
+		vTaskDelay(M2T(2000));
+	}
+
   static struct MedianFilterFloat medFilt;
   init_median_filter_f(&medFilt, 5);
   static struct MedianFilterFloat medFilt_2;
@@ -482,6 +493,7 @@ void appMain(void *param)
 
 void p2pcallbackHandler(P2PPacket *p)
 {
+	ledClearAll();
     id_inter_ext = p->data[0];
 
 
