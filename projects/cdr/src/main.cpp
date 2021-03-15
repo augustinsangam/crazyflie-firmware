@@ -1,24 +1,22 @@
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
-#include <time.h>
+#include <cstdint>
+#define DEBUG_MODULE "HELLOWORLD"
 
-#include "app.h"
+extern "C" {
+#include <FreeRTOS.h>
+#include <app.h> /* appMain */
+#include <app_channel.h>
+#include <debug.h> /* DEBUG_PRINT */
+#include <task.h>  /* vTaskDelay */
 
-#include "FreeRTOS.h"
-#include "task.h"
+#include <led.h>
+#include <log.h>
+#include <pm.h>
+}
 
-#include "debug.h"
+#include <cstdint>
+#include <ctime>
 
-#include "log.h"
-#include "param.h"
-#include "pm.h"
-
-#include "app_channel.h"
-#include "led.h"
-#include "unistd.h"
-
-const static float bat671723HS25C[10] = {
+constexpr static float bat671723HS25C[] = {
     3.00, // 00%
     3.78, // 10%
     3.83, // 20%
@@ -31,24 +29,20 @@ const static float bat671723HS25C[10] = {
     4.10  // 90%
 };
 
-static int32_t pmBatteryChargeFromVoltage(float voltage)
-{
-  int charge = 0;
+static std::int32_t pmBatteryChargeFromVoltage(float voltage) {
+	if (voltage < bat671723HS25C[0]) {
+		return 0;
+	}
 
-  if (voltage < bat671723HS25C[0])
-  {
-    return 0;
-  }
-  if (voltage > bat671723HS25C[9])
-  {
-    return 9;
-  }
-  while (voltage > bat671723HS25C[charge])
-  {
-    charge++;
-  }
+	if (voltage > bat671723HS25C[9]) {
+		return 9;
+	}
 
-  return charge;
+	std::int32_t charge = 0;
+	while (voltage > bat671723HS25C[charge]) {
+		++charge;
+	}
+	return charge;
 }
 
 struct testPacketRX
