@@ -802,7 +802,4 @@ target_sources(cf2 PRIVATE
 
 target_include_directories(cf2 PRIVATE "./include")
 target_sources(cf2 PRIVATE
-	"./src/SGBA.c"
-	"./src/state_machine.c"
-	"./src/wallfollowing_multiranger_onboard.c"
-	"./src/wallfollowing_with_avoid.c")
+	"./projects/cdr/src/main.cpp")
