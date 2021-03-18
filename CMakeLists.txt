@@ -6,22 +6,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-#################################### OPTIONS ###################################
-
-option(CLOAD "Enable cload bootloader" ON)
-if(CLOAD)
-	set(LINKER_SCRIPT "FLASH_CLOAD.ld")
-	set(LOAD_ADDRESS 0x8004000)
-else()
-	set(LINKER_SCRIPT "FLASH.ld")
-	set(LOAD_ADDRESS 0x8000000)
-endif()
-
-set(OPENOCD_INTERFACE "interface/stlink-v2.cfg")
-set(OPENOCD_TARGET "target/stm32f4x_stlink.cfg")
-
-set(OUTPUT_NAME "cf2")
-
 #################################### CUSTOM ####################################
 
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
@@ -34,47 +18,6 @@ add_custom_command(
 	        "${CMAKE_CURRENT_BINARY_DIR}/version.c"
 	WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cf_fw")
 add_custom_target(version_c DEPENDS "version.c")
-
-add_custom_command(
-	OUTPUT "${OUTPUT_NAME}.bin"
-	COMMAND "${CMAKE_OBJCOPY}"
-	        -O binary
-	        --pad-to=0
-	        --remove-section=._usrstack --remove-section=.bss --remove-section=.nzds
-	        "$<TARGET_FILE:cf2>" "${OUTPUT_NAME}.bin"
-	DEPENDS cf2)
-add_custom_target(cf2_bin ALL DEPENDS "${OUTPUT_NAME}.bin")
-
-if(CLOAD)
-	add_custom_target(cload
-		COMMAND "${Python3_EXECUTABLE}" -m cfloader flash "${OUTPUT_NAME}.bin" stm32-fw
-		DEPENDS cf2_bin)
-endif()
-
-find_program(OpenOCD_EXECUTABLE openocd)
-if(OpenOCD_EXECUTABLE)
-	set(FULL_OUTPUT_BIN "${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT_NAME}.bin")
-
-	add_custom_target(flash
-		COMMAND "${OpenOCD_EXECUTABLE}"
-		        -d 2
-		        -f "${OPENOCD_INTERFACE}" -f "${OPENOCD_TARGET}"
-		        -c init -c targets -c "reset halt"
-		        -c "flash write_image erase ${FULL_OUTPUT_BIN} ${LOAD_ADDRESS} bin"
-		        -c "reset run" -c shutdown
-		DEPENDS cf2_bin
-		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cf_fw")
-
-	add_custom_target(verify
-		COMMAND "${OpenOCD_EXECUTABLE}"
-		        -d 2
-		        -f "${OPENOCD_INTERFACE}" -f "${OPENOCD_TARGET}"
-		        -c init -c targets -c "reset halt"
-		        -c "verify_image ${FULL_OUTPUT_BIN} ${LOAD_ADDRESS} bin"
-		        -c "reset run" -c shutdown
-		DEPENDS cf2_bin
-		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cf_fw")
-endif()
 
 #################################### VENDOR ####################################
 
@@ -96,8 +39,6 @@ if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Debug")
 		"-Wmissing-declarations"
 		"-Wshadow"
 		"-Wstrict-overflow")
-	target_compile_options(warnings INTERFACE
-		"-Wno-address-of-packed-member")
 endif()
 
 add_library(cmsis INTERFACE)
@@ -486,18 +427,17 @@ target_sources(stm32f4xx PRIVATE
 	"./cf_fw/src/lib/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_misc.c"
 	"./cf_fw/src/lib/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_syscfg.c")
 
-add_executable(cf2)
-set_target_properties(cf2 PROPERTIES
-	OUTPUT_NAME "${OUTPUT_NAME}"
-	SUFFIX ".elf")
+add_library(cf2 STATIC)
 
 add_dependencies(cf2 version_c)
+target_link_libraries(cf2 PUBLIC cmsis stm32f4xx)
 target_link_libraries(cf2 PRIVATE common warnings)
-target_link_libraries(cf2 PRIVATE cmsis)
-target_link_libraries(cf2 PRIVATE arm_math dw1000 stm32f4xx)
+target_link_libraries(cf2 PRIVATE arm_math dw1000)
 target_link_libraries(cf2 PRIVATE m)
 
-target_include_directories(cf2 PRIVATE
+target_compile_options(cf2 PUBLIC "-Wno-address-of-packed-member")
+
+target_include_directories(cf2 PUBLIC
 	"./cf_fw/vendor/FreeRTOS/include"
 	"./cf_fw/vendor/FreeRTOS/portable/GCC/ARM_CM4F")
 target_sources(cf2 PRIVATE
@@ -512,12 +452,6 @@ target_compile_definitions(cf2 PRIVATE APP_ENABLED APP_STACKSIZE=300)
 
 target_compile_definitions(cf2 PRIVATE
 	"BLOBS_LOC=\"${CMAKE_CURRENT_SOURCE_DIR}/blobs/\"")
-
-# DOES NOT WORK: invalid order: -T ... -L ...
-#target_link_directories(cf PRIVATE "./tools/make/F405/linker")
-target_link_options(cf2 PRIVATE
-	"-L${CMAKE_CURRENT_SOURCE_DIR}/cf_fw/tools/make/F405/linker"
-	"SHELL:-T ${LINKER_SCRIPT}")
 
 set(ESTIMATOR "any")
 set(CONTROLLER "Any")
@@ -535,10 +469,10 @@ target_compile_definitions(cf2 PRIVATE
 	"POWER_DISTRIBUTION_TYPE_${POWER_DISTRIBUTION}")
 
 # utils
-target_include_directories(cf2 PRIVATE
+target_include_directories(cf2 PUBLIC
 	"./cf_fw/src/utils/interface"
-	"./cf_fw/src/utils/interface/lighthouse"
-	"./cf_fw/src/utils/interface/tdoa")
+	"./cf_fw/src/utils/interface/lighthouse")
+target_include_directories(cf2 PRIVATE "./cf_fw/src/utils/interface/tdoa")
 target_sources(cf2 PRIVATE
 	"./cf_fw/src/utils/src/kve/kve.c"
 	"./cf_fw/src/utils/src/kve/kve_storage.c"
@@ -569,9 +503,8 @@ target_sources(cf2 PRIVATE
 target_sources(cf2 PRIVATE "version.c")
 
 # deck
-target_include_directories(cf2 PRIVATE
-	"./cf_fw/src/deck/drivers/interface"
-	"./cf_fw/src/deck/interface")
+target_include_directories(cf2 PUBLIC "./cf_fw/src/deck/interface")
+target_include_directories(cf2 PRIVATE "./cf_fw/src/deck/drivers/interface")
 target_sources(cf2 PRIVATE
 	"./cf_fw/src/deck/api/deck_analog.c"
 	"./cf_fw/src/deck/api/deck_constants.c"
@@ -609,9 +542,8 @@ else()
 endif()
 
 # drivers
-target_include_directories(cf2 PRIVATE
-	"./cf_fw/src/drivers/bosch/interface"
-	"./cf_fw/src/drivers/interface")
+target_include_directories(cf2 PUBLIC "./cf_fw/src/drivers/interface")
+target_include_directories(cf2 PRIVATE "./cf_fw/src/drivers/bosch/interface")
 target_sources(cf2 PRIVATE
 	"./cf_fw/src/drivers/bosch/src/bmi055_accel.c"
 	"./cf_fw/src/drivers/bosch/src/bmi055_gyro.c"
@@ -651,7 +583,7 @@ target_sources(cf2 PRIVATE
 	"./cf_fw/src/drivers/src/ws2812_cf2.c")
 
 # hal
-target_include_directories(cf2 PRIVATE "./cf_fw/src/hal/interface")
+target_include_directories(cf2 PUBLIC "./cf_fw/src/hal/interface")
 target_sources(cf2 PRIVATE
 	"./cf_fw/src/hal/src/amg8833.c"
 	"./cf_fw/src/hal/src/buzzer.c"
@@ -677,8 +609,8 @@ target_sources(cf2 PRIVATE
 	"./cf_fw/src/hal/src/usec_time.c")
 
 # modules
+target_include_directories(cf2 PUBLIC "./cf_fw/src/modules/interface")
 target_include_directories(cf2 PRIVATE
-	"./cf_fw/src/modules/interface"
 	"./cf_fw/src/modules/interface/kalman_core"
 	"./cf_fw/src/modules/interface/lighthouse")
 target_sources(cf2 PRIVATE
@@ -800,6 +732,4 @@ target_sources(cf2 PRIVATE
 	"./cf_fw/src/lib/STM32_USB_OTG_Driver/src/usb_dcd.c"
 	"./cf_fw/src/lib/STM32_USB_OTG_Driver/src/usb_dcd_int.c")
 
-target_include_directories(cf2 PRIVATE "./include")
-target_sources(cf2 PRIVATE
-	"./projects/cdr/src/main.cpp")
+add_subdirectory("./projects")
