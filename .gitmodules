@@ -2,3 +2,7 @@
 	branch = ultimate
 	path = cf_fw
 	url = https://github.com/concatime/crazyflie-firmware.git
+[submodule "projects/rr/exploration"]
+	branch = master
+	path = projects/rr/exploration
+	url = git@gitlab.com:polytechnique-montr-al/inf3995/20211/equipe-203/exploration.git
