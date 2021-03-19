@@ -2,10 +2,10 @@
 
 extern "C" {
 #include <FreeRTOS.h>
-#include <app.h> /* appMain */
+#include <app.h>
 #include <app_channel.h>
-#include <debug.h> /* DEBUG_PRINT */
-#include <task.h>  /* vTaskDelay */
+#include <debug.h>
+#include <task.h>
 
 #include <led.h>
 #include <log.h>

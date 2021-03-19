@@ -25,7 +25,7 @@ add_library(common INTERFACE)
 target_compile_options(common INTERFACE
 	"-fno-math-errno" "-fno-strict-aliasing"
 	"-ffunction-sections" "-fdata-sections")
-#target_link_options(common INTERFACE "LINKER:--gc-sections")
+target_link_options(common INTERFACE "LINKER:--gc-sections")
 target_include_directories(common INTERFACE "./cf_fw/src/config")
 
 add_library(warnings INTERFACE)
@@ -427,7 +427,8 @@ target_sources(stm32f4xx PRIVATE
 	"./cf_fw/src/lib/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_misc.c"
 	"./cf_fw/src/lib/STM32F4xx_StdPeriph_Driver/src/stm32f4xx_syscfg.c")
 
-add_library(cf2 STATIC)
+#add_library(cf2 STATIC)
+add_executable(cf2)
 
 add_dependencies(cf2 version_c)
 target_link_libraries(cf2 PUBLIC cmsis stm32f4xx)
