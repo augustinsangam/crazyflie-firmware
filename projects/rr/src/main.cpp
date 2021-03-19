@@ -21,10 +21,18 @@ extern "C" {
 static exploration::StateMachine sm; // NOLINT
 
 static void p2pCB(P2PPacket *p) {
+	// ledSetAll();
+	// vTaskDelay(M2T(1000));
+	// ledClearAll();
+	// vTaskDelay(M2T(1000));
+	// ledSetAll();
+	// vTaskDelay(M2T(1000));
+	// ledClearAll();
 	sm.p2p_callback_handler(reinterpret_cast<exploration::P2PPacket *>(p));
 }
 
 void appMain() {
+	ledClearAll();
 	sm.startup();
 	p2pRegisterCB(p2pCB);
 

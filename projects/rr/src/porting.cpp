@@ -38,7 +38,7 @@ void porting::commander_set_setpoint(exploration::setpoint_t *setpoint,
 }
 
 void porting::estimator_kalman_get_estimated_pos(exploration::point_t *pos) {
-	return estimatorKalmanGetEstimatedPos(reinterpret_cast<point_t *>(pos));
+	estimatorKalmanGetEstimatedPos(reinterpret_cast<point_t *>(pos));
 }
 
 bool porting::send_p2p_packet_broadcast(exploration::P2PPacket *p2pp) {
@@ -77,7 +77,7 @@ float porting::get_front_range() {
 
 /* Between 0 and 1 */
 float porting::get_right_range() {
-	return rangeGet(rangeDirection_t::rangeFront);
+	return rangeGet(rangeDirection_t::rangeRight);
 }
 
 /* Between 0 and 1 */
