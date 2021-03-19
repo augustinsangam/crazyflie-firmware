@@ -1,3 +1,4 @@
+set(EXPLORATION_DEP ON)
 add_subdirectory("./exploration")
 
 add_cf_executable(rr)

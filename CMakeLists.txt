@@ -25,7 +25,7 @@ add_library(common INTERFACE)
 target_compile_options(common INTERFACE
 	"-fno-math-errno" "-fno-strict-aliasing"
 	"-ffunction-sections" "-fdata-sections")
-target_link_options(common INTERFACE "LINKER:--gc-sections")
+#target_link_options(common INTERFACE "LINKER:--gc-sections")
 target_include_directories(common INTERFACE "./cf_fw/src/config")
 
 add_library(warnings INTERFACE)
