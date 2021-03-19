@@ -2,6 +2,7 @@ set(EXPLORATION_DEP ON)
 set(EXPLORATION_METHOD 1)
 set(TICKS_PER_FSM_LOOP 10)
 add_subdirectory("./exploration")
+target_link_libraries(exploration PRIVATE common warnings)
 
 #cf_executable(rr)
 target_link_libraries(cf2 PRIVATE exploration)
