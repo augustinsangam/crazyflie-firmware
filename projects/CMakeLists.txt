@@ -63,3 +63,4 @@ function(add_cf_executable target)
 endfunction()
 
 add_subdirectory("./cdr")
+add_subdirectory("./rr")
