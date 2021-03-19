@@ -1,4 +1,6 @@
 set(EXPLORATION_DEP ON)
+set(EXPLORATION_METHOD 1)
+set(TICKS_PER_FSM_LOOP 10)
 add_subdirectory("./exploration")
 
 #cf_executable(rr)
