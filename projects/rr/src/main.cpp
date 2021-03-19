@@ -21,7 +21,7 @@ extern "C" {
 static exploration::StateMachine sm; // NOLINT
 
 static void p2pCB(P2PPacket *p) {
-	sm.p2pCallbackHandler(reinterpret_cast<exploration::P2PPacket *>(p));
+	sm.p2p_callback_handler(reinterpret_cast<exploration::P2PPacket *>(p));
 }
 
 void appMain() {

@@ -1,5 +1,6 @@
 #include <cstdint>
 
+extern "C" {
 #include <FreeRTOS.h>
 #include <FreeRTOSConfig.h>
 #include <commander.h>
@@ -13,19 +14,20 @@
 #include <system.h>
 #include <task.h>
 #include <usec_time.h>
+}
 
 #include <porting/porting.hpp>
 
 /**
  * Get microsecond-resolution timestamp.
  */
-uint64_t porting::us_timestamp(void) { return usecTimestamp(); }
+uint64_t porting::us_timestamp() { return usecTimestamp(); }
 
-uint64_t porting::config_block_get_radio_address(void) {
+uint64_t porting::config_block_get_radio_address() {
 	return configblockGetRadioAddress();
 }
 
-void porting::system_wait_start(void) { systemWaitStart(); }
+void porting::system_wait_start() { systemWaitStart(); }
 
 void porting::ticks_delay(uint32_t nTicksToDelay) { vTaskDelay(nTicksToDelay); }
 uint32_t porting::ms_to_ticks(uint16_t ms) { return M2T(ms); }
