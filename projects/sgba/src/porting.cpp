@@ -8,8 +8,7 @@ extern "C" {
 }
 } // namespace fr
 
-namespace cf {
-extern "C" {
+extern "C" namespace cf {
 #include <commander.h>
 #include <configblock.h>
 #include <estimator_kalman.h>
@@ -20,7 +19,6 @@ extern "C" {
 #include <stabilizer_types.h>
 #include <system.h>
 #include <usec_time.h>
-}
 } // namespace cf
 
 extern "C" {
