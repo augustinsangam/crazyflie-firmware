@@ -1,9 +1,7 @@
 #ifndef STATE_MACHINE_HPP
 #define STATE_MACHINE_HPP
 
-extern "C" {
-#include "../median_filter.h"
-}
+#include "median_filter.hpp"
 #include "types.hpp"
 #include <cstdint>
 

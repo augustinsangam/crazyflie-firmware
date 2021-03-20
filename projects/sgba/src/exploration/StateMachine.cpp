@@ -2,9 +2,12 @@
 
 #include "exploration/StateMachine.hpp"
 #include "porting.hpp"
+
 extern "C" {
 #include "../wallfollowing_multiranger_onboard.h"
 }
+
+#include <cstring>
 
 #define METHOD 1
 
