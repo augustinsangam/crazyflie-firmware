@@ -1,15 +1,7 @@
-//#define TYPES_H
-
 #include "exploration/StateMachine.hpp"
 #include "porting.hpp"
 
-extern "C" {
-#include "../wallfollowing_multiranger_onboard.h"
-}
-
 #include <cstring>
-
-#define METHOD 1
 
 #define M_PI 3.14159F
 #define STATE_MACHINE_COMMANDER_PRI 3
@@ -235,8 +227,9 @@ void StateMachine::step() {
 
 #if METHOD == 1 // WALL_FOLLOWING
                 // wall following state machine
-			state = wall_follower(&vel_x_cmd, &vel_y_cmd, &vel_w_cmd,
-			                      front_range, right_range, heading_rad, 1);
+			state = exploration_controller_.wall_follower(
+			    &vel_x_cmd, &vel_y_cmd, &vel_w_cmd, front_range, right_range,
+			    heading_rad, 1);
 #endif
 #if METHOD == 2 // WALL_FOLLOWER_AND_AVOID
 			if (id_inter_closest > my_id) {
@@ -293,7 +286,7 @@ void StateMachine::step() {
 					taken_off = true;
 
 #if METHOD == 1 // wall following
-					wall_follower_init(0.4, 0.5, 1);
+					exploration_controller_.init(0.4F, 0.5F, 1);
 #endif
 #if METHOD == 2 // wallfollowing with avoid
 					if (my_id % 2 == 1)

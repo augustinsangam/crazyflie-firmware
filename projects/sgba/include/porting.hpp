@@ -6,8 +6,6 @@
 
 #include "exploration/types.hpp"
 
-#define M2T(x) x
-
 void kalman_estimated_pos(exploration::point_t *pos);
 
 void p2p_register_cb(void (*cb)(exploration::P2PPacket *));
