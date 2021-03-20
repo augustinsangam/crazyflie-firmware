@@ -3,7 +3,7 @@ extern "C" {
 #include <radiolink.h>
 }
 
-#include "StateMachine.hpp"
+#include "exploration/StateMachine.hpp"
 
 static exploration::StateMachine sm; // NOLINT
 

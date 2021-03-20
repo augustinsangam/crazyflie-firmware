@@ -1,6 +1,6 @@
 //#define TYPES_H
 
-#include "StateMachine.hpp"
+#include "exploration/StateMachine.hpp"
 #include "porting.hpp"
 extern "C" {
 #include "../wallfollowing_multiranger_onboard.h"

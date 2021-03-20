@@ -4,7 +4,7 @@
 #include <cmath>
 #include <cstdint>
 
-#include "types.hpp"
+#include "exploration/types.hpp"
 
 #define M2T(x) x
 
