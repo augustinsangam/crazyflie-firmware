@@ -66,4 +66,5 @@ endfunction()
 
 cf_executable(cf2)
 #add_subdirectory("./cdr")
-add_subdirectory("./rr")
+#add_subdirectory("./rr")
+add_subdirectory("./sgba")
