@@ -1,7 +1,9 @@
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef TYPES_HPP
+#define TYPES_HPP
 
-#include <stdint.h>
+#include <cstdint>
+
+namespace exploration {
 
 /******************************************************************************/
 
@@ -89,4 +91,6 @@ typedef struct setpoint_s {
 
 /******************************************************************************/
 
-#endif /* TYPES_H */
+}
+
+#endif /* TYPES_HPP */

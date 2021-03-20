@@ -1,3 +1,5 @@
+#include "porting.hpp"
+
 #include <cmath>
 #include <cstdint>
 
@@ -21,29 +23,26 @@ extern "C" namespace cf {
 #include <usec_time.h>
 } // namespace cf
 
-extern "C" {
-#include "porting.h"
-}
-
-void kalman_estimated_pos(point_t *pos) {
+void kalman_estimated_pos(exploration::point_t *pos) {
 	cf::estimatorKalmanGetEstimatedPos(reinterpret_cast<cf::point_t *>(pos));
 }
 
 std::uint64_t timestamp_us() { return fr::usecTimestamp(); }
 
-void p2p_register_cb(void (*cb)(P2PPacket *)) {
+void p2p_register_cb(void (*cb)(exploration::P2PPacket *)) {
 	cf::p2pRegisterCB(reinterpret_cast<cf::P2PCallback>(cb));
 }
 
-void radiolink_broadcast_packet(P2PPacket *packet) {
-	cf::radiolinkSendP2PPacketBroadcast(reinterpret_cast<cf::P2PPacket *>(packet));
+void radiolink_broadcast_packet(exploration::P2PPacket *packet) {
+	cf::radiolinkSendP2PPacketBroadcast(
+	    reinterpret_cast<cf::P2PPacket *>(packet));
 }
 
 void system_wait_start() { cf::systemWaitStart(); }
 
 void delay_ticks(uint32_t ticks) { fr::vTaskDelay(ticks); }
 
-void commander_set_point(setpoint_t *sp, int prio) {
+void commander_set_point(exploration::setpoint_t *sp, int prio) {
 	cf::commanderSetSetpoint(reinterpret_cast<cf::setpoint_t *>(sp), prio);
 }
 

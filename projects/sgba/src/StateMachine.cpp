@@ -1,9 +1,8 @@
 //#define TYPES_H
 
 #include "StateMachine.hpp"
-#include "types.h"
+#include "porting.hpp"
 extern "C" {
-#include "porting.h"
 #include "../wallfollowing_multiranger_onboard.h"
 }
 
@@ -11,6 +10,8 @@ extern "C" {
 
 #define M_PI 3.14159F
 #define STATE_MACHINE_COMMANDER_PRI 3
+
+namespace exploration {
 
 static int32_t find_minimum(uint8_t a[], int32_t n) {
 	int32_t c, min, index;
@@ -87,7 +88,7 @@ void StateMachine::init() {
 	init_median_filter_f(&medFilt_3, 13);
 	// p2pRegisterCB(p2pcallbackHandler);
 	auto address = config_block_radio_address();
-	my_id = (uint8_t)((address) & 0x00000000ff);
+	my_id = (uint8_t)((address)&0x00000000ff);
 
 #if METHOD != 1
 	p_reply.port = 0x00;
@@ -116,7 +117,8 @@ void StateMachine::step() {
 	// get RSSI, id and angle of closests crazyflie.
 	auto id_inter_closest = (uint8_t)find_minimum(rssi_array_other_drones, 9);
 	auto rssi_inter_closest = rssi_array_other_drones[id_inter_closest];
-	auto rssi_angle_inter_closest = rssi_angle_array_other_drones[id_inter_closest];
+	auto rssi_angle_inter_closest =
+	    rssi_angle_array_other_drones[id_inter_closest];
 
 	auto rssi_inter_filtered =
 	    (uint8_t)update_median_filter_f(&medFilt_2, (float)rssi_inter_closest);
@@ -374,3 +376,5 @@ void StateMachine::p2p_callback_handler(P2PPacket *p) {
 		rssi_angle_array_other_drones[id_inter_ext] = rssi_angle_inter_ext;
 	}
 }
+
+} // namespace exploration
