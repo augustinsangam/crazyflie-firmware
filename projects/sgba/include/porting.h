@@ -6,9 +6,13 @@
 
 #include "types.h"
 
+#define M2T(x) x
+
 void kalman_estimated_pos(point_t *pos);
 
 void p2p_register_cb(void (*cb)(P2PPacket *));
+
+void radiolink_broadcast_packet(P2PPacket *packet);
 
 void system_wait_start(void);
 

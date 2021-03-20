@@ -35,6 +35,10 @@ void p2p_register_cb(void (*cb)(P2PPacket *)) {
 	cf::p2pRegisterCB(reinterpret_cast<cf::P2PCallback>(cb));
 }
 
+void radiolink_broadcast_packet(P2PPacket *packet) {
+	cf::radiolinkSendP2PPacketBroadcast(reinterpret_cast<cf::P2PPacket *>(packet));
+}
+
 void system_wait_start() { cf::systemWaitStart(); }
 
 void delay_ticks(uint32_t ticks) { fr::vTaskDelay(ticks); }
