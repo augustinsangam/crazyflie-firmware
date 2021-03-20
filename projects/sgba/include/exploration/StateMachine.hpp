@@ -1,7 +1,7 @@
 #ifndef STATE_MACHINE_HPP
 #define STATE_MACHINE_HPP
 
-#include "WallFollowing.hpp"
+//#include "WallFollowing.hpp"
 #include "median_filter.hpp"
 #include "types.hpp"
 #include <cstdint>
@@ -35,7 +35,7 @@ class StateMachine {
 #endif
 
 #if METHOD == 1
-	WallFollowing exploration_controller_;
+	//WallFollowing exploration_controller_;
 #endif
 
 public:

@@ -4,6 +4,16 @@
 #include "porting.hpp"
 #include <cmath>
 
+#define wraptopi wrap_to_pi
+#define commandAlignCorner command_align_corner
+#define commandHover command_hover
+#define commandTurn command_turn
+#define usecTimestamp timestamp_us
+#define logicIsCloseTo logic_is_close_to
+#define commandTurnAndAdjust command_turn_and_adjust
+#define commandForwardAlongWall command_forward_along_wall
+#define commandTurnAroundCornerAndAdjust command_turn_around_corner_and_adjust
+
 void exploration::WallFollowing::init(float new_ref_distance_from_wall,
                                       float max_speed_ref, int init_state) {
 	ref_distance_from_wall = new_ref_distance_from_wall;
@@ -103,191 +113,188 @@ int exploration::WallFollowing::wall_follower(float *vel_x, float *vel_y,
                                               float current_heading,
                                               float direction_turn) {
 
-	direction = direction_turn;
-	static float previous_heading = 0;
-	static float angle = 0;
-	static bool around_corner_go_back = false;
-	auto now = static_cast<float>(static_cast<double>(timestamp_us()) / 1e6);
 
-	if (first_run) {
-		previous_heading = current_heading;
-		//  around_corner_first_turn = false;
-		around_corner_go_back = false;
-		first_run = false;
-	}
+  direction = direction_turn;
+  static float previous_heading = 0;
+  static float angle = 0;
+  static bool around_corner_go_back = false;
+  float now = usecTimestamp() / 1e6;
 
-	/***********************************************************
-	 * State definitions
-	 ***********************************************************/
-	// 1 = forward
-	// 2 = hover
-	// 3 = turn_to_find_wall
-	// 4 = turn_to_allign_to_wall
-	// 5 = forward along wall
-	// 6 = rotate_around_wall
-	// 7 = rotate_in_corner
-	// 8 = find corner
+  if (first_run) {
+    previous_heading = current_heading;
+    //  around_corner_first_turn = false;
+    around_corner_go_back = false;
+    first_run = false;
+  }
 
-	/***********************************************************
-	 * Handle state transitions
-	 ***********************************************************/
 
-	if (state == 1) { // FORWARD
-		if (front_range < ref_distance_from_wall + 0.2F) {
-			state = transition(3);
-		}
-	} else if (state == 2) { // HOVER
+  /***********************************************************
+   * State definitions
+   ***********************************************************/
+  // 1 = forward
+  // 2 = hover
+  // 3 = turn_to_find_wall
+  // 4 = turn_to_allign_to_wall
+  // 5 = forward along wall
+  // 6 = rotate_around_wall
+  // 7 = rotate_in_corner
+  // 8 = find corner
 
-	} else if (state == 3) { // TURN_TO_FIND_WALL
-		// check if wall is found
-		bool side_range_check =
-		    side_range < ref_distance_from_wall / std::cos(0.78F) + 0.2F;
-		bool front_range_check =
-		    front_range < ref_distance_from_wall / std::cos(0.78F) + 0.2F;
-		if (side_range_check && front_range_check) {
-			previous_heading = current_heading;
-			angle = direction *
-			        (1.57F - std::atan(front_range / side_range) + 0.1F);
-			state = transition(4); // go to turn_to_allign_to_wall
-		}
-		if (side_range < 1.0F && front_range > 2.0F) {
-			//  around_corner_first_turn = true;
-			around_corner_go_back = false;
-			previous_heading = current_heading;
-			state = transition(8); // go to rotate_around_wall
-		}
-	} else if (state == 4) { // TURN_TO_ALLIGN_TO_WALL
-		bool allign_wall_check = logic_is_close_to(
-		    wrap_to_pi(current_heading - previous_heading), angle, 0.1F);
-		if (allign_wall_check) {
-			// prev_side_range = side_range;
-			state = transition(5);
-		}
-	} else if (state == 5) { // FORWARD_ALONG_WALL
+  /***********************************************************
+  * Handle state transitions
+  ***********************************************************/
 
-		// If side range is out of reach,
-		//    end of the wall is reached
-		if (side_range > ref_distance_from_wall + 0.3F) {
-			//  around_corner_first_turn = true;
-			state = transition(8);
-		}
-		// If front range is small
-		//    then corner is reached
-		if (front_range < ref_distance_from_wall + 0.2F) {
-			previous_heading = current_heading;
-			state = transition(7);
-		}
+  if (state == 1) {     //FORWARD
+    if (front_range < ref_distance_from_wall + 0.2f) {
+      state = transition(3);
+    }
+  } else if (state == 2) {  // HOVER
 
-	} else if (state == 6) { // ROTATE_AROUND_WALL
-		if (front_range < ref_distance_from_wall + 0.2F) {
-			state = transition(3);
-		}
+  } else if (state == 3) { // TURN_TO_FIND_WALL
+    // check if wall is found
+    bool side_range_check = side_range < ref_distance_from_wall / (float)cos(0.78f) + 0.2f;
+    bool front_range_check = front_range < ref_distance_from_wall / (float)cos(0.78f) + 0.2f;
+    if (side_range_check && front_range_check) {
+      previous_heading = current_heading;
+      angle = direction * (1.57f - (float)atan(front_range / side_range) + 0.1f);
+      state = transition(4); // go to turn_to_allign_to_wall
+    }
+    if (side_range < 1.0f && front_range > 2.0f) {
+      //  around_corner_first_turn = true;
+      around_corner_go_back = false;
+      previous_heading = current_heading;
+      state = transition(8); // go to rotate_around_wall
+    }
+  } else if (state == 4) { //TURN_TO_ALLIGN_TO_WALL
+    bool allign_wall_check = logicIsCloseTo(wraptopi(current_heading - previous_heading), angle, 0.1f);
+    if (allign_wall_check) {
+      // prev_side_range = side_range;
+      state = transition(5);
+    }
+  } else if (state == 5) {  //FORWARD_ALONG_WALL
 
-	} else if (state == 7) { // ROTATE_IN_CORNER
-		// Check if heading goes over 0.8 rad
-		bool check_heading_corner = logic_is_close_to(
-		    std::fabs(wrap_to_pi(current_heading - previous_heading)), 0.8F,
-		    0.1F);
-		if (check_heading_corner) {
-			state = transition(3);
-		}
+    // If side range is out of reach,
+    //    end of the wall is reached
+    if (side_range > ref_distance_from_wall + 0.3f) {
+      //  around_corner_first_turn = true;
+      state = transition(8);
+    }
+    // If front range is small
+    //    then corner is reached
+    if (front_range < ref_distance_from_wall + 0.2f) {
+      previous_heading = current_heading;
+      state = transition(7);
+    }
 
-	} else if (state == 8) { // FIND_CORNER
-		if (side_range <= ref_distance_from_wall) {
-			state = transition(6);
-		}
+  } else if (state == 6) {  //ROTATE_AROUND_WALL
+    if (front_range < ref_distance_from_wall + 0.2f) {
+      state = transition(3);
+    }
 
-	}
 
-	else {
-	}
+  } else if (state == 7) {   //ROTATE_IN_CORNER
+    // Check if heading goes over 0.8 rad
+    bool check_heading_corner = logicIsCloseTo(fabs(wraptopi(current_heading - previous_heading)), 0.8f, 0.1f);
+    if (check_heading_corner) {
+      state = transition(3);
+    }
 
-	/***********************************************************
-	 * Handle state actions
-	 ***********************************************************/
+  } else if (state == 8) {   //FIND_CORNER
+    if (side_range <= ref_distance_from_wall) {
+      state = transition(6);
+    }
 
-	float temp_vel_x = 0;
-	float temp_vel_y = 0;
-	float temp_vel_w = 0;
+  }
 
-	if (state == 1) { // FORWARD
-		temp_vel_x = max_speed;
-		temp_vel_y = 0.0;
-		temp_vel_w = 0.0;
+  else {
+  }
 
-	} else if (state == 2) { // HOVER
-		command_hover(&temp_vel_x, &temp_vel_y, &temp_vel_w);
 
-	} else if (state == 3) { // TURN_TO_FIND_WALL
-		command_turn(&temp_vel_x, &temp_vel_w, max_rate);
-		temp_vel_y = 0.0;
+  /***********************************************************
+   * Handle state actions
+   ***********************************************************/
 
-	} else if (state == 4) { // TURN_TO_ALLIGN_TO_WALL
+  float temp_vel_x = 0;
+  float temp_vel_y = 0;
+  float temp_vel_w = 0;
 
-		if (now - state_start_time < 1.0F) {
-			command_hover(&temp_vel_x, &temp_vel_y, &temp_vel_w);
-		} else { // then turn again
-			command_turn(&temp_vel_x, &temp_vel_w, max_rate);
-			temp_vel_y = 0;
-		}
+  if (state == 1) {      //FORWARD
+    temp_vel_x = max_speed;
+    temp_vel_y = 0.0;
+    temp_vel_w = 0.0;
 
-	} else if (state == 5) { // FORWARD_ALONG_WALL
-		command_forward_along_wall(&temp_vel_x, &temp_vel_y, side_range);
-		temp_vel_w = 0.0F;
+  } else if (state == 2) {  // HOVER
+    commandHover(&temp_vel_x, &temp_vel_y, &temp_vel_w);
 
-		// commandForwardAlongWallHeadingSine(&temp_vel_x,
-		// &temp_vel_y,&temp_vel_w, side_range);
 
-	} else if (state == 6) { // ROTATE_AROUND_WALL
-		// If first time around corner
-		// first try to find the corner again
+  } else if (state == 3) { // TURN_TO_FIND_WALL
+    commandTurn(&temp_vel_x, &temp_vel_w, max_rate);
+    temp_vel_y = 0.0;
 
-		// if side range is larger than prefered distance from wall
-		if (side_range > ref_distance_from_wall + 0.5F) {
+  } else if (state == 4) { //TURN_TO_ALLIGN_TO_WALL
 
-			// check if scanning has already occured
-			if (wrap_to_pi(std::fabs(current_heading - previous_heading)) >
-			    0.8F) {
-				around_corner_go_back = true;
-			}
-			// turn and adjust distnace to corner from that point
-			if (around_corner_go_back) {
-				// go back if it already went into one direction
-				command_turn_and_adjust(&temp_vel_y, &temp_vel_w, -1 * max_rate,
-				                        side_range);
-				temp_vel_x = 0.0F;
-			} else {
-				command_turn_and_adjust(&temp_vel_y, &temp_vel_w, max_rate,
-				                        side_range);
-				temp_vel_x = 0.0F;
-			}
-		} else {
-			// continue to turn around corner
-			previous_heading = current_heading;
-			around_corner_go_back = false;
-			command_turn_around_corner_and_adjust(
-			    &temp_vel_x, &temp_vel_y, &temp_vel_w, ref_distance_from_wall,
-			    side_range);
-		}
 
-	} else if (state == 7) { // ROTATE_IN_CORNER
-		command_turn(&temp_vel_x, &temp_vel_w, max_rate);
-		temp_vel_y = 0;
 
-	} else if (state == 8) { // FIND_CORNER
-		command_align_corner(&temp_vel_y, &temp_vel_w, -1 * max_rate,
-		                     side_range, ref_distance_from_wall);
-		temp_vel_x = 0;
-	}
+    if (now - state_start_time < 1.0f)
+    {
+      commandHover(&temp_vel_x, &temp_vel_y, &temp_vel_w);
+    } else { // then turn again
+      commandTurn(&temp_vel_x, &temp_vel_w, max_rate);
+      temp_vel_y = 0;
+    }
 
-	else {
-		// State does not exist so hover!!
-		command_hover(&temp_vel_x, &temp_vel_y, &temp_vel_w);
-	}
+  } else if (state == 5) {  //FORWARD_ALONG_WALL
+    commandForwardAlongWall(&temp_vel_x, &temp_vel_y, side_range);
+    temp_vel_w = 0.0f;
 
-	*vel_x = temp_vel_x;
-	*vel_y = temp_vel_y;
-	*vel_w = temp_vel_w;
+    //commandForwardAlongWallHeadingSine(&temp_vel_x, &temp_vel_y,&temp_vel_w, side_range);
 
-	return state;
+  } else if (state == 6) {  //ROTATE_AROUND_WALL
+    // If first time around corner
+    //first try to find the corner again
+
+    // if side range is larger than prefered distance from wall
+    if (side_range > ref_distance_from_wall + 0.5f) {
+
+      // check if scanning has already occured
+      if (wraptopi(fabs(current_heading - previous_heading)) > 0.8f) {
+        around_corner_go_back = true;
+      }
+      // turn and adjust distnace to corner from that point
+      if (around_corner_go_back) {
+        // go back if it already went into one direction
+        commandTurnAndAdjust(&temp_vel_y, &temp_vel_w, -1 * max_rate, side_range);
+        temp_vel_x = 0.0f;
+      } else {
+        commandTurnAndAdjust(&temp_vel_y, &temp_vel_w, max_rate, side_range);
+        temp_vel_x = 0.0f;
+      }
+    } else {
+      // continue to turn around corner
+      previous_heading = current_heading;
+      around_corner_go_back = false;
+      commandTurnAroundCornerAndAdjust(&temp_vel_x, &temp_vel_y, &temp_vel_w, ref_distance_from_wall, side_range);
+    }
+
+  } else if (state == 7) {     //ROTATE_IN_CORNER
+    commandTurn(&temp_vel_x, &temp_vel_w, max_rate);
+    temp_vel_y = 0;
+
+  } else if (state == 8) { //FIND_CORNER
+    commandAlignCorner(&temp_vel_y, &temp_vel_w, -1 * max_rate, side_range, ref_distance_from_wall);
+    temp_vel_x = 0;
+  }
+
+  else {
+    //State does not exist so hover!!
+    commandHover(&temp_vel_x, &temp_vel_y, &temp_vel_w);
+  }
+
+
+  *vel_x = temp_vel_x;
+  *vel_y = temp_vel_y;
+  *vel_w = temp_vel_w;
+
+  return state;
+
 }

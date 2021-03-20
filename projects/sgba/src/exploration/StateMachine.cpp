@@ -1,6 +1,8 @@
 #include "exploration/StateMachine.hpp"
 #include "porting.hpp"
 
+#include "exploration/wallfollowing.hpp"
+
 #include <cstring>
 
 #define M_PI 3.14159F
@@ -227,7 +229,8 @@ void StateMachine::step() {
 
 #if METHOD == 1 // WALL_FOLLOWING
                 // wall following state machine
-			state = exploration_controller_.wall_follower(
+			//state = exploration_controller_.wall_follower(
+			state = wall_follower(
 			    &vel_x_cmd, &vel_y_cmd, &vel_w_cmd, front_range, right_range,
 			    heading_rad, 1);
 #endif
@@ -286,7 +289,8 @@ void StateMachine::step() {
 					taken_off = true;
 
 #if METHOD == 1 // wall following
-					exploration_controller_.init(0.4F, 0.5F, 1);
+					//exploration_controller_.init(0.4F, 0.5F, 1);
+					wall_follower_init(0.4F, 0.5F, 1);
 #endif
 #if METHOD == 2 // wallfollowing with avoid
 					if (my_id % 2 == 1)

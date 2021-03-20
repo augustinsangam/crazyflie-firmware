@@ -3,7 +3,8 @@ target_compile_definitions(cf2 PRIVATE METHOD=1)
 target_sources(cf2 PRIVATE
 	"./src/porting.cpp"
 	"./src/exploration/StateMachine.cpp"
-	"./src/exploration/WallFollowing.cpp"
+	"./src/exploration/wallfollowing.cpp"
+	#"./src/exploration/WallFollowing.cpp"
 	"./src/main.cpp"
 	"./src/exploration/median_filter.cpp"
 )
