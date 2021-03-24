@@ -2,16 +2,9 @@
 #include "math_supp.hpp"
 #include "porting.hpp"
 
-// Converts degrees to radians.
-#define deg2rad(angleDegrees) (angleDegrees * (float)M_PI / 180.0F)
-
-// Converts radians to degrees.
-#define rad2deg(angleRadians) (angleRadians * 180.0F / (float)M_PI)
-
 static int transition(int new_state, float *state_start_time) {
-
-	float t = timestamp_us() / 1e6;
-	*state_start_time = t;
+	*state_start_time =
+	    static_cast<float>(static_cast<double>(timestamp_us()) / 1e6);
 
 	return new_state;
 }
@@ -21,16 +14,6 @@ static bool logicIsCloseTo(float real_value, float checked_value,
                            float margin) {
 	return real_value > checked_value - margin &&
 	       real_value < checked_value + margin;
-}
-
-static float wraptopi(float number) {
-	if (number > (float)M_PI) {
-		return (number - (float)(2 * M_PI));
-	} else if (number < (float)(-1 * M_PI)) {
-		return (number + (float)(2 * M_PI));
-	} else {
-		return (number);
-	}
 }
 
 // Command functions
@@ -57,7 +40,7 @@ static float fillHeadingArray(uint8_t *correct_heading_array,
 	// Heading array of action choices
 	static float heading_array[8] = {-135.0F, -90.0F, -45.0F, 0.0F,
 	                                 45.0F,   90.0F,  135.0F, 180.0F};
-	float rssi_heading_deg = rad2deg(rssi_heading);
+	float rssi_heading_deg = rad_to_deg(rssi_heading);
 
 	for (int it = 0; it < 8; it++) {
 
@@ -109,10 +92,11 @@ static float fillHeadingArray(uint8_t *correct_heading_array,
 
 	for (int it = 0; it < 8; it++) {
 		if (correct_heading_array[it] > 0) {
-			x_part += (float)correct_heading_array[it] *
-			          (float)cos(heading_array[it] * (float)M_PI / 180.0F);
-			y_part += (float)correct_heading_array[it] *
-			          (float)sin(heading_array[it] * (float)M_PI / 180.0F);
+			auto angle = deg_to_rad(heading_array[it]);
+			x_part +=
+			    static_cast<float>(correct_heading_array[it]) * std::cos(angle);
+			y_part +=
+			    static_cast<float>(correct_heading_array[it]) * std::sin(angle);
 
 			// sum += heading_array[it];
 			count = count + correct_heading_array[it];
@@ -120,8 +104,8 @@ static float fillHeadingArray(uint8_t *correct_heading_array,
 	}
 	float wanted_angle_return = 0;
 	if (count != 0) {
-		wanted_angle_return =
-		    atan2(y_part / (float)count, x_part / (float)count);
+		wanted_angle_return = std::atan2(y_part / static_cast<float>(count),
+		                                 x_part / static_cast<float>(count));
 	}
 
 	return wanted_angle_return;
@@ -170,7 +154,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 	// if it is reinitialized
 	if (first_run) {
 
-		wanted_angle_dir = wraptopi(
+		wanted_angle_dir = wrap_to_pi(
 		    current_heading -
 		    wanted_angle); // to determine the direction when turning to goal
 
@@ -183,8 +167,8 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 	}
 
 	if (first_time_inbound) {
-		wraptopi(wanted_angle - 3.14f);
-		wanted_angle_dir = wraptopi(current_heading - wanted_angle);
+		wrap_to_pi(wanted_angle - pi<float>);
+		wanted_angle_dir = wrap_to_pi(current_heading - wanted_angle);
 		state = transition(2, &state_start_time);
 		first_time_inbound = false;
 	}
@@ -235,7 +219,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 	} else if (state == 2) { // ROTATE_TO_GOAL
 		// check if heading is close to the preferred_angle
 		bool goal_check =
-		    logicIsCloseTo(wraptopi(current_heading - wanted_angle), 0, 0.1F);
+		    logicIsCloseTo(wrap_to_pi(current_heading - wanted_angle), 0, 0.1F);
 		if (front_range < ref_distance_from_wall + 0.2F) {
 			cannot_go_to_goal = true;
 			wf_.wall_follower_init(0.4F, 0.5, 3);
@@ -254,7 +238,8 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 				if ((rssi_angle_inter < 0 && wanted_angle < 0) ||
 				    (rssi_angle_inter > 0 && wanted_angle > 0)) {
 					wanted_angle = -1 * wanted_angle;
-					wanted_angle_dir = wraptopi(current_heading - wanted_angle);
+					wanted_angle_dir =
+					    wrap_to_pi(current_heading - wanted_angle);
 					// state= transition(2);
 				}
 			}
@@ -272,7 +257,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 
 		// Check if the goal is reachable from the current point of view of the
 		// agent
-		float bearing_to_goal = wraptopi(wanted_angle - current_heading);
+		float bearing_to_goal = wrap_to_pi(wanted_angle - current_heading);
 		bool goal_check_WF = false;
 		if (direction == -1) {
 			goal_check_WF = (bearing_to_goal < 0 && bearing_to_goal > -1.5F);
@@ -286,14 +271,11 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 		    current_pos_x -
 		    pos_x_hit; //  diff_rssi = (int)prev_rssi - (int)rssi_beacon;
 		float rel_y_loop = current_pos_y - pos_y_hit;
-		float loop_angle = wraptopi(atan2(rel_y_loop, rel_x_loop));
+		float loop_angle = wrap_to_pi(std::atan2(rel_y_loop, rel_x_loop));
 
-		// if(outbound)
-		//{
-
-		if (fabs(wraptopi(wanted_angle_hit + 3.14f - loop_angle)) < 1.0) {
+		if (std::abs(wrap_to_pi(wanted_angle_hit + pi<float> - loop_angle)) <
+		    1) {
 			overwrite_and_reverse_direction = true;
-		} else {
 		}
 
 		// if during wallfollowing, agent goes around wall, and heading is close
@@ -301,7 +283,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 		//      got to rotate to goal
 		if ((state_wf == 6 || state_wf == 8) && goal_check_WF &&
 		    front_range > ref_distance_from_wall + 0.4F && !cannot_go_to_goal) {
-			wanted_angle_dir = wraptopi(
+			wanted_angle_dir = wrap_to_pi(
 			    current_heading - wanted_angle); // to determine the direction
 			                                     // when turning to goal
 			state = transition(2, &state_start_time); // rotate_to_goal
@@ -325,8 +307,8 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 				// went into the right path
 				float rel_x_sample = current_pos_x - pos_x_sample;
 				float rel_y_sample = current_pos_y - pos_y_sample;
-				float distance = sqrt(rel_x_sample * rel_x_sample +
-				                      rel_y_sample * rel_y_sample);
+				auto distance = std::sqrt(rel_x_sample * rel_x_sample +
+				                          rel_y_sample * rel_y_sample);
 				if (distance > 1.0F) {
 					rssi_sample_reset = true;
 					heading_rssi = current_heading;
