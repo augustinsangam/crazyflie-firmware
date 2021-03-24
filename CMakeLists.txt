@@ -30,7 +30,7 @@ target_include_directories(common INTERFACE "./cf_fw/src/config")
 
 add_library(warnings INTERFACE)
 target_compile_options(warnings INTERFACE
-	"-Werror=implicit-function-declaration")
+	"$<$<COMPILE_LANGUAGE:C>:-Werror=implicit-function-declaration>")
 if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "Debug")
 	target_compile_options(warnings INTERFACE "-Wall" "-Wextra" "-Wpedantic")
 	target_compile_options(warnings INTERFACE
