@@ -10,6 +10,8 @@
 #	include "exploration/WallFollowing.hpp"
 #elif METHOD == 2
 #	include "exploration/WallFollowingWithAvoid.hpp"
+#elif METHOD == 3
+#	include "exploration/SGBA.hpp"
 #endif
 
 namespace exploration {
@@ -56,6 +58,10 @@ private:
 	WallFollowing exploration_controller_;
 #elif METHOD == 2
 	WallFollowingWithAvoid exploration_controller_;
+#elif METHOD == 3
+	SGBA exploration_controller_;
+	int state_wf_;
+	static constexpr bool outbound_{true};
 #endif
 };
 
