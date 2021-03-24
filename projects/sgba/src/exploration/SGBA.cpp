@@ -2,32 +2,16 @@
 #include "math_supp.hpp"
 #include "porting.hpp"
 
-float state_start_time;
-
-// static variables only used for initialization
-static bool first_run = true;
-static float ref_distance_from_wall = 0;
-static float max_speed = 0.5;
-
-// Make variable
-uint8_t rssi_threshold =
-    58; // normal batteries 50/52/53/53 bigger batteries 55/57/59
-uint8_t rssi_collision_threshold =
-    50; // normal batteris 43/45/45/46 bigger batteries 48/50/52
-
-// statemachine functions
-static float wanted_angle = 0;
-
 // Converts degrees to radians.
 #define deg2rad(angleDegrees) (angleDegrees * (float)M_PI / 180.0F)
 
 // Converts radians to degrees.
 #define rad2deg(angleRadians) (angleRadians * 180.0F / (float)M_PI)
 
-static int transition(int new_state) {
+static int transition(int new_state, float *state_start_time) {
 
 	float t = timestamp_us() / 1e6;
-	state_start_time = t;
+	*state_start_time = t;
 
 	return new_state;
 }
@@ -201,7 +185,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 	if (first_time_inbound) {
 		wraptopi(wanted_angle - 3.14f);
 		wanted_angle_dir = wraptopi(current_heading - wanted_angle);
-		state = transition(2);
+		state = transition(2, &state_start_time);
 		first_time_inbound = false;
 	}
 
@@ -246,7 +230,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 				correct_heading_array[it] = 0;
 			}
 
-			state = transition(3); // wall_following
+			state = transition(3, &state_start_time); // wall_following
 		}
 	} else if (state == 2) { // ROTATE_TO_GOAL
 		// check if heading is close to the preferred_angle
@@ -256,10 +240,10 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 			cannot_go_to_goal = true;
 			wf_.wall_follower_init(0.4F, 0.5, 3);
 
-			state = transition(3); // wall_following
+			state = transition(3, &state_start_time); // wall_following
 		}
 		if (goal_check) {
-			state = transition(1); // forward
+			state = transition(1, &state_start_time); // forward
 		}
 	} else if (state == 3) { // WALL_FOLLOWING
 
@@ -275,7 +259,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 				}
 			}
 			if (rssi_inter < rssi_collision_threshold) {
-				state = transition(4);
+				state = transition(4, &state_start_time);
 			}
 		}
 
@@ -320,7 +304,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 			wanted_angle_dir = wraptopi(
 			    current_heading - wanted_angle); // to determine the direction
 			                                     // when turning to goal
-			state = transition(2);               // rotate_to_goal
+			state = transition(2, &state_start_time); // rotate_to_goal
 		}
 
 		// If going straight
@@ -365,7 +349,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 		// once the drone has gone by, rotate to goal
 		if (rssi_inter >= rssi_collision_threshold) {
 
-			state = transition(2); // rotate_to_goal
+			state = transition(2, &state_start_time); // rotate_to_goal
 		}
 	}
 
