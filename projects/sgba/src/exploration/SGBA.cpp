@@ -15,11 +15,14 @@ uint8_t rssi_threshold =
 uint8_t rssi_collision_threshold =
     50; // normal batteris 43/45/45/46 bigger batteries 48/50/52
 
+// statemachine functions
+static float wanted_angle = 0;
+
 // Converts degrees to radians.
-#define deg2rad(angleDegrees) (angleDegrees * (float)M_PI / 180.0f)
+#define deg2rad(angleDegrees) (angleDegrees * (float)M_PI / 180.0F)
 
 // Converts radians to degrees.
-#define rad2deg(angleRadians) (angleRadians * 180.0f / (float)M_PI)
+#define rad2deg(angleRadians) (angleRadians * 180.0F / (float)M_PI)
 
 static int transition(int new_state) {
 
@@ -32,12 +35,8 @@ static int transition(int new_state) {
 // Static helper functions
 static bool logicIsCloseTo(float real_value, float checked_value,
                            float margin) {
-	if (real_value > checked_value - margin &&
-	    real_value < checked_value + margin) {
-		return true;
-	} else {
-		return false;
-	}
+	return real_value > checked_value - margin &&
+	       real_value < checked_value + margin;
 }
 
 static float wraptopi(float number) {
@@ -72,17 +71,17 @@ static float fillHeadingArray(uint8_t *correct_heading_array,
                               int max_meters) {
 
 	// Heading array of action choices
-	static float heading_array[8] = {-135.0f, -90.0f, -45.0f, 0.0f,
-	                                 45.0f,   90.0f,  135.0f, 180.0f};
+	static float heading_array[8] = {-135.0F, -90.0F, -45.0F, 0.0F,
+	                                 45.0F,   90.0F,  135.0F, 180.0F};
 	float rssi_heading_deg = rad2deg(rssi_heading);
 
 	for (int it = 0; it < 8; it++) {
 
 		// Fill array based on heading and rssi heading
-		if ((rssi_heading_deg >= heading_array[it] - 22.5f &&
-		     rssi_heading_deg < heading_array[it] + 22.5f && it != 7) ||
-		    (it == 7 && (rssi_heading_deg >= heading_array[it] - 22.5f ||
-		                 rssi_heading_deg < -135.0f - 22.5f))) {
+		if ((rssi_heading_deg >= heading_array[it] - 22.5F &&
+		     rssi_heading_deg < heading_array[it] + 22.5F && it != 7) ||
+		    (it == 7 && (rssi_heading_deg >= heading_array[it] - 22.5F ||
+		                 rssi_heading_deg < -135.0F - 22.5F))) {
 			uint8_t temp_value_forward = correct_heading_array[it];
 			uint8_t temp_value_backward = correct_heading_array[(it + 4) % 8];
 
@@ -127,9 +126,9 @@ static float fillHeadingArray(uint8_t *correct_heading_array,
 	for (int it = 0; it < 8; it++) {
 		if (correct_heading_array[it] > 0) {
 			x_part += (float)correct_heading_array[it] *
-			          (float)cos(heading_array[it] * (float)M_PI / 180.0f);
+			          (float)cos(heading_array[it] * (float)M_PI / 180.0F);
 			y_part += (float)correct_heading_array[it] *
-			          (float)sin(heading_array[it] * (float)M_PI / 180.0f);
+			          (float)sin(heading_array[it] * (float)M_PI / 180.0F);
 
 			// sum += heading_array[it];
 			count = count + correct_heading_array[it];
@@ -143,9 +142,6 @@ static float fillHeadingArray(uint8_t *correct_heading_array,
 
 	return wanted_angle_return;
 }
-
-// statemachine functions
-static float wanted_angle = 0;
 
 void exploration::SGBA::init(float new_ref_distance_from_wall,
                              float max_speed_ref, float begin_wanted_heading) {
@@ -197,8 +193,8 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 		overwrite_and_reverse_direction = false;
 		state = 2;
 
-		float t = timestamp_us() / 1e6;
-		state_start_time = t;
+		state_start_time =
+		    static_cast<float>(static_cast<double>(timestamp_us()) / 1e6);
 		first_run = false;
 	}
 
@@ -222,20 +218,20 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 	 ***********************************************************/
 
 	if (state == 1) { // FORWARD
-		if (front_range < ref_distance_from_wall + 0.2f) {
+		if (front_range < ref_distance_from_wall + 0.2F) {
 
 			// if looping is detected, reverse direction (only on outbound)
 			if (overwrite_and_reverse_direction) {
-				direction = -1.0f * direction;
+				direction = -1.0F * direction;
 				overwrite_and_reverse_direction = false;
 			} else {
-				if (left_range < right_range && left_range < 2.0f) {
-					direction = -1.0f;
-				} else if (left_range > right_range && right_range < 2.0f) {
-					direction = 1.0f;
+				if (left_range < right_range && left_range < 2.0F) {
+					direction = -1.0F;
+				} else if (left_range > right_range && right_range < 2.0F) {
+					direction = 1.0F;
 
-				} else if (left_range > 2.0f && right_range > 2.0f) {
-					direction = 1.0f;
+				} else if (left_range > 2.0F && right_range > 2.0F) {
+					direction = 1.0F;
 				} else {
 				}
 			}
@@ -244,7 +240,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 			pos_y_hit = current_pos_y;
 			wanted_angle_hit = wanted_angle;
 
-			wf_.wall_follower_init(0.4, 0.5, 3);
+			wf_.wall_follower_init(0.4F, 0.5, 3);
 
 			for (int it = 0; it < 8; it++) {
 				correct_heading_array[it] = 0;
@@ -255,10 +251,10 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 	} else if (state == 2) { // ROTATE_TO_GOAL
 		// check if heading is close to the preferred_angle
 		bool goal_check =
-		    logicIsCloseTo(wraptopi(current_heading - wanted_angle), 0, 0.1f);
-		if (front_range < ref_distance_from_wall + 0.2f) {
+		    logicIsCloseTo(wraptopi(current_heading - wanted_angle), 0, 0.1F);
+		if (front_range < ref_distance_from_wall + 0.2F) {
 			cannot_go_to_goal = true;
-			wf_.wall_follower_init(0.4, 0.5, 3);
+			wf_.wall_follower_init(0.4F, 0.5, 3);
 
 			state = transition(3); // wall_following
 		}
@@ -295,9 +291,9 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 		float bearing_to_goal = wraptopi(wanted_angle - current_heading);
 		bool goal_check_WF = false;
 		if (direction == -1) {
-			goal_check_WF = (bearing_to_goal < 0 && bearing_to_goal > -1.5f);
+			goal_check_WF = (bearing_to_goal < 0 && bearing_to_goal > -1.5F);
 		} else {
-			goal_check_WF = (bearing_to_goal > 0 && bearing_to_goal < 1.5f);
+			goal_check_WF = (bearing_to_goal > 0 && bearing_to_goal < 1.5F);
 		}
 
 		// Check if bug went into a looping while wall following,
@@ -320,7 +316,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 		// to rssi _angle
 		//      got to rotate to goal
 		if ((state_wf == 6 || state_wf == 8) && goal_check_WF &&
-		    front_range > ref_distance_from_wall + 0.4f && !cannot_go_to_goal) {
+		    front_range > ref_distance_from_wall + 0.4F && !cannot_go_to_goal) {
 			wanted_angle_dir = wraptopi(
 			    current_heading - wanted_angle); // to determine the direction
 			                                     // when turning to goal
@@ -347,10 +343,11 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 				float rel_y_sample = current_pos_y - pos_y_sample;
 				float distance = sqrt(rel_x_sample * rel_x_sample +
 				                      rel_y_sample * rel_y_sample);
-				if (distance > 1.0f) {
+				if (distance > 1.0F) {
 					rssi_sample_reset = true;
 					heading_rssi = current_heading;
-					int diff_rssi_unf = (int)prev_rssi - (int)rssi_beacon;
+					int diff_rssi_unf = static_cast<int>(prev_rssi) -
+					                    static_cast<int>(rssi_beacon);
 
 					// rssi already gets filtered at the radio_link.c
 					diff_rssi = diff_rssi_unf;
@@ -384,10 +381,10 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 		// stop moving if there is another drone in the way
 		// forward max speed
 		if (left_range < ref_distance_from_wall) {
-			temp_vel_y = -0.2f;
+			temp_vel_y = -0.2F;
 		}
 		if (right_range < ref_distance_from_wall) {
-			temp_vel_y = 0.2f;
+			temp_vel_y = 0.2F;
 		}
 		temp_vel_x = 0.5;
 		//}
@@ -413,18 +410,18 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 		}
 	} else if (state == 4) { // MOVE_AWAY
 
-		float save_distance = 0.7f;
+		float save_distance = 0.7F;
 		if (left_range < save_distance) {
-			temp_vel_y = temp_vel_y - 0.5f;
+			temp_vel_y = temp_vel_y - 0.5F;
 		}
 		if (right_range < save_distance) {
-			temp_vel_y = temp_vel_y + 0.5f;
+			temp_vel_y = temp_vel_y + 0.5F;
 		}
 		if (front_range < save_distance) {
-			temp_vel_x = temp_vel_x - 0.5f;
+			temp_vel_x = temp_vel_x - 0.5F;
 		}
 		if (back_range < save_distance) {
-			temp_vel_x = temp_vel_x + 0.5f;
+			temp_vel_x = temp_vel_x + 0.5F;
 		}
 	}
 
