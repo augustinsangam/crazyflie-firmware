@@ -1,14 +1,32 @@
-#ifndef STATE_MACHINE_HPP
-#define STATE_MACHINE_HPP
+#ifndef EXPLORATION_STATEMACHINE_HPP
+#define EXPLORATION_STATEMACHINE_HPP
 
-//#include "WallFollowing.hpp"
+#include "WallFollowing.hpp"
 #include "median_filter.hpp"
 #include "types.hpp"
 #include <cstdint>
 
+#if METHOD == 1
+#	include "exploration/WallFollowing.hpp"
+#elif METHOD == 2
+#	include "exploration/WallFollowingWithAvoid.hpp"
+#endif
+
 namespace exploration {
 
 class StateMachine {
+public:
+	void init();
+	void step();
+	void p2p_callback_handler(P2PPacket *p);
+	StateMachine()
+#if METHOD == 1
+	    : exploration_controller_()
+#endif
+	{
+	}
+
+private:
 	static constexpr float nominal_height = 0.3F;
 
 	uint8_t my_id;
@@ -35,15 +53,12 @@ class StateMachine {
 #endif
 
 #if METHOD == 1
-	//WallFollowing exploration_controller_;
+	WallFollowing exploration_controller_;
+#elif METHOD == 2
+	WallFollowingWithAvoid exploration_controller_;
 #endif
-
-public:
-	void init();
-	void step();
-	void p2p_callback_handler(P2PPacket *p);
 };
 
 } // namespace exploration
 
-#endif /* STATE_MACHINE_HPP */
+#endif /* EXPLORATION_STATEMACHINE_HPP */

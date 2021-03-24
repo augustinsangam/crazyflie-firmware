@@ -1,8 +1,6 @@
 #include "exploration/StateMachine.hpp"
 #include "porting.hpp"
 
-#include "exploration/wallfollowing.hpp"
-
 #include <cstring>
 
 #define M_PI 3.14159F
@@ -229,8 +227,8 @@ void StateMachine::step() {
 
 #if METHOD == 1 // WALL_FOLLOWING
                 // wall following state machine
-			//state = exploration_controller_.wall_follower(
-			state = wall_follower(
+			// state = exploration_controller_.wall_follower(
+			state = exploration_controller_.wall_follower(
 			    &vel_x_cmd, &vel_y_cmd, &vel_w_cmd, front_range, right_range,
 			    heading_rad, 1);
 #endif
@@ -239,7 +237,7 @@ void StateMachine::step() {
 				rssi_inter_filtered = 140;
 			}
 
-			state = wall_follower_and_avoid_controller(
+			state = exploration_controller_.wall_follower(
 			    &vel_x_cmd, &vel_y_cmd, &vel_w_cmd, front_range, left_range,
 			    right_range, heading_rad, rssi_inter_filtered);
 #endif
@@ -289,17 +287,17 @@ void StateMachine::step() {
 					taken_off = true;
 
 #if METHOD == 1 // wall following
-					//exploration_controller_.init(0.4F, 0.5F, 1);
-					wall_follower_init(0.4F, 0.5F, 1);
-#endif
-#if METHOD == 2 // wallfollowing with avoid
-					if (my_id % 2 == 1)
-						init_wall_follower_and_avoid_controller(0.4, 0.5, -1);
-					else
-						init_wall_follower_and_avoid_controller(0.4, 0.5, 1);
-
-#endif
-#if METHOD == 3 // Swarm Gradient Bug Algorithm
+                // exploration_controller_.init(0.4F, 0.5F, 1);
+					exploration_controller_.wall_follower_init(0.4F, 0.5, 1);
+#elif METHOD == 2 // wallfollowing with avoid
+					if (my_id % 2 == 1) {
+						exploration_controller_.wall_follower_init(0.4F, 0.5,
+						                                           -1);
+					} else {
+						exploration_controller_.wall_follower_init(0.4F, 0.5,
+						                                           1);
+					}
+#elif METHOD == 3 // Swarm Gradient Bug Algorithm
 					if (my_id == 4 || my_id == 8) {
 						init_SGBA_controller(0.4, 0.5, -0.8);
 					} else if (my_id == 2 || my_id == 6) {
@@ -311,7 +309,6 @@ void StateMachine::step() {
 					} else {
 						init_SGBA_controller(0.4, 0.5, 0.8);
 					}
-
 #endif
 				}
 				// on_the_ground = false;

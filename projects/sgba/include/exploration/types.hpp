@@ -1,5 +1,5 @@
-#ifndef TYPES_HPP
-#define TYPES_HPP
+#ifndef EXPLORATION_TYPES_HPP
+#define EXPLORATION_TYPES_HPP
 
 #include <cstdint>
 
@@ -91,6 +91,6 @@ typedef struct setpoint_s {
 
 /******************************************************************************/
 
-}
+} // namespace exploration
 
-#endif /* TYPES_HPP */
+#endif /* EXPLORATION_TYPES_HPP */

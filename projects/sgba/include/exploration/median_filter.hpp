@@ -1,5 +1,5 @@
-#ifndef MEDIAN_FILTER_HPP
-#define MEDIAN_FILTER_HPP
+#ifndef EXPLORATION_MEDIAN_FILTER_HPP
+#define EXPLORATION_MEDIAN_FILTER_HPP
 
 #define MAX_MEDIAN_DATASIZE_I 101
 #define MAX_MEDIAN_DATASIZE_F 13
@@ -43,4 +43,4 @@ float update_median_filter_f(struct MedianFilterFloat *filter, float new_data);
 uint8_t movingAvg(int *ptrArrNumbers, long *ptrSum, int pos, int len,
                   int nextNum);
 
-#endif /* MEDIAN_FILTER_HPP */
+#endif /* EXPLORATION_MEDIAN_FILTER_HPP */
