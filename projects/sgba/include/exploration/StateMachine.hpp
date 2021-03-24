@@ -4,6 +4,7 @@
 #include "WallFollowing.hpp"
 #include "median_filter.hpp"
 #include "types.hpp"
+#include <array>
 #include <cstdint>
 
 #if METHOD == 1
@@ -37,10 +38,10 @@ private:
 	float front_range, right_range, left_range, back_range, up_range;
 	uint8_t rssi_beacon;
 	uint64_t takeoffdelaytime = 0;
-	uint64_t time_array_other_drones[9] = {0};
-	uint8_t rssi_array_other_drones[9] = {150, 150, 150, 150, 150,
-	                                      150, 150, 150, 150};
-	float rssi_angle_array_other_drones[9] = {500.0F};
+	std::array<std::uint64_t, 9> time_array_other_drones{0};
+	std::array<std::uint8_t, 9> rssi_array_other_drones{150, 150, 150, 150, 150,
+	                                                    150, 150, 150, 150};
+	std::array<float, 9> rssi_angle_array_other_drones{500.0F};
 	bool correctly_initialized = false;
 	bool keep_flying = false, taken_off = false;
 	int state = 0;

@@ -1,29 +1,12 @@
 #include "exploration/StateMachine.hpp"
 #include "math_supp.hpp"
 #include "porting.hpp"
-
+#include <algorithm>
 #include <cstring>
 
-#define M_PI 3.14159F
 #define STATE_MACHINE_COMMANDER_PRI 3
 
 namespace exploration {
-
-static int32_t find_minimum(uint8_t a[], int32_t n) {
-	int32_t c, min, index;
-
-	min = a[0];
-	index = 0;
-
-	for (c = 1; c < n; c++) {
-		if (a[c] < min) {
-			index = c;
-			min = a[c];
-		}
-	}
-
-	return index;
-}
 
 static void take_off(setpoint_t *sp, float velocity) {
 	sp->mode.x = modeVelocity;
@@ -82,14 +65,13 @@ void StateMachine::init() {
 	init_median_filter_f(&medFilt, 5);
 	init_median_filter_f(&medFilt_2, 5);
 	init_median_filter_f(&medFilt_3, 13);
-	// p2pRegisterCB(p2pcallbackHandler);
 	auto address = config_block_radio_address();
-	my_id = static_cast<uint8_t>(address & 0x00000000ffU);
+	my_id = static_cast<uint8_t>(address & 0x00000000FFU);
 
 #if METHOD != 1
-	p_reply.port = 0x00;
-	p_reply.data[0] = my_id;
-	memcpy(&p_reply.data[1], &rssi_angle, sizeof rssi_angle);
+	p_reply.port = 0x00;                                           // NOLINT
+	p_reply.data[0] = my_id;                                       // NOLINT
+	std::memcpy(&p_reply.data[1], &rssi_angle, sizeof rssi_angle); // NOLINT
 	p_reply.size = 5;
 #endif
 
@@ -104,19 +86,23 @@ void StateMachine::step() {
 	// For every 1 second, reset the RSSI value to high if it hasn't been
 	// received for a while
 	for (uint8_t it = 0; it < 9; it++) {
-		if (timestamp_us() >= time_array_other_drones[it] + 1000 * 1000) {
-			time_array_other_drones[it] = timestamp_us() + 1000 * 1000 + 1;
-			rssi_array_other_drones[it] = 150;
-			rssi_angle_array_other_drones[it] = 500.0F;
+		if (timestamp_us() >= time_array_other_drones.at(it) + 1000 * 1000) {
+			time_array_other_drones.at(it) = timestamp_us() + 1000 * 1000 + 1;
+			rssi_array_other_drones.at(it) = 150;
+			rssi_angle_array_other_drones.at(it) = 500.0F;
 		}
 	}
 
 	// get RSSI, id and angle of closests crazyflie.
-	auto id_inter_closest =
-	    static_cast<uint8_t>(find_minimum(rssi_array_other_drones, 9));
-	auto rssi_inter_closest = rssi_array_other_drones[id_inter_closest];
+	auto *begin = rssi_array_other_drones.begin();
+	auto id_inter_closest = static_cast<std::size_t>(
+	    std::min_element(begin, rssi_array_other_drones.end()) - begin);
+	auto rssi_inter_closest = rssi_array_other_drones.at(id_inter_closest);
+
+#if METHOD == 3
 	auto rssi_angle_inter_closest =
-	    rssi_angle_array_other_drones[id_inter_closest];
+	    rssi_angle_array_other_drones.at(id_inter_closest);
+#endif
 
 	auto rssi_inter_filtered = static_cast<uint8_t>(update_median_filter_f(
 	    &medFilt_2, static_cast<float>(rssi_inter_closest)));
@@ -130,18 +116,11 @@ void StateMachine::step() {
 	float heading_deg = stabilizer_yaw();
 	auto heading_rad = deg_to_rad(heading_deg);
 
-	// t RSSI of beacon
+#if METHOD == 3
 	rssi_beacon = radio_rssi();
 	auto rssi_beacon_filtered = static_cast<uint8_t>(
 	    update_median_filter_f(&medFilt_3, static_cast<float>(rssi_beacon)));
-
-	/* filter rssi
-	static int pos_avg = 0;
-	static long sum = 0;
-	static int arrNumbers[26] = {35};
-	static int len = sizeof(arrNumbers) / sizeof(int);
-	rssi_beacon_filtered = (uint8_t)movingAvg(arrNumbers, &sum, pos_avg,
-	len, (int)rssi_beacon);*/
+#endif
 
 	// Select which laser range sensor readings to use
 	if (multiranger_isinit != 0) {
@@ -172,13 +151,13 @@ void StateMachine::step() {
 
 #if METHOD == 3
 	uint8_t rssi_beacon_threshold = 41;
-	if (keep_flying == true &&
+	if (keep_flying &&
 	    (!correctly_initialized || up_range < 0.2F ||
 	     (!outbound_ && rssi_beacon_filtered < rssi_beacon_threshold))) {
 		keep_flying = false;
 	}
 #else
-	if (keep_flying == true && (!correctly_initialized || up_range < 0.2F)) {
+	if (keep_flying && (!correctly_initialized || up_range < 0.2F)) {
 		keep_flying = false;
 	}
 #endif
@@ -214,7 +193,6 @@ void StateMachine::step() {
 			    &vel_x_cmd, &vel_y_cmd, &vel_w_cmd, front_range, left_range,
 			    right_range, heading_rad, rssi_inter_filtered);
 #elif METHOD == 3 // SwWARM GRADIENT BUG ALGORITHM
-
 			bool priority = false;
 			priority = id_inter_closest > my_id;
 			state = exploration_controller_.controller(
@@ -223,8 +201,7 @@ void StateMachine::step() {
 			    pos.x, pos.y, rssi_beacon_filtered, rssi_inter_filtered,
 			    rssi_angle_inter_closest, priority, outbound_);
 
-			memcpy(&p_reply.data[1], &rssi_angle, sizeof rssi_angle);
-
+			std::memcpy(&p_reply.data[1], &rssi_angle, sizeof rssi_angle);
 #endif
 
 			// convert yaw rate commands to degrees
@@ -321,22 +298,23 @@ void StateMachine::step() {
 }
 
 void StateMachine::p2p_callback_handler(P2PPacket *p) {
-	auto id_inter_ext = p->data[0];
+	auto id_inter_ext = p->data[0]; // NOLINT
 
 	if (id_inter_ext == 0x63) {
 		// rssi_beacon =rssi_inter;
-		keep_flying = p->data[1];
+		keep_flying = p->data[1]; // NOLINT
 	} else if (id_inter_ext == 0x64) {
 		rssi_beacon = p->rssi;
 
 	} else {
 		auto rssi_inter = p->rssi;
 		float rssi_angle_inter_ext;
-		memcpy(&rssi_angle_inter_ext, &p->data[1], sizeof p->data[1]);
+		std::memcpy(&rssi_angle_inter_ext, &p->data[1], // NOLINT
+		            sizeof p->data[1]);                 // NOLINT
 
-		rssi_array_other_drones[id_inter_ext] = rssi_inter;
-		time_array_other_drones[id_inter_ext] = timestamp_us();
-		rssi_angle_array_other_drones[id_inter_ext] = rssi_angle_inter_ext;
+		rssi_array_other_drones.at(id_inter_ext) = rssi_inter;
+		time_array_other_drones.at(id_inter_ext) = timestamp_us();
+		rssi_angle_array_other_drones.at(id_inter_ext) = rssi_angle_inter_ext;
 	}
 }
 
