@@ -1,6 +1,7 @@
 {
   "clangd": {
     "arguments": [
+      "--clang-tidy",
       "--compile-commands-dir=build"
     ],
     "onConfigChanged": "restart"
