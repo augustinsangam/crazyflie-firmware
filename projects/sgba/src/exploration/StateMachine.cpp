@@ -1,4 +1,5 @@
 #include "exploration/StateMachine.hpp"
+#include "math_supp.hpp"
 #include "porting.hpp"
 
 #include <cstring>
@@ -88,7 +89,7 @@ void StateMachine::init() {
 #if METHOD != 1
 	p_reply.port = 0x00;
 	p_reply.data[0] = my_id;
-	memcpy(&p_reply.data[1], &rssi_angle, sizeof(float));
+	memcpy(&p_reply.data[1], &rssi_angle, sizeof rssi_angle);
 	p_reply.size = 5;
 #endif
 
@@ -127,7 +128,7 @@ void StateMachine::step() {
 	// get current height and heading
 	auto height = kalman_state_z();
 	float heading_deg = stabilizer_yaw();
-	auto heading_rad = heading_deg * (float)M_PI / 180.0f;
+	auto heading_rad = deg_to_rad(heading_deg);
 
 	// t RSSI of beacon
 	rssi_beacon = radio_rssi();
@@ -157,42 +158,13 @@ void StateMachine::step() {
 
 	// Initialize setpoint
 	setpoint_t setpoint_BG;
-	memset(&setpoint_BG, 0, sizeof(setpoint_BG));
+	memset(&setpoint_BG, 0, sizeof setpoint_BG);
 
 	// Filtere uprange, since it sometimes gives a low spike that
 	auto up_range_filtered = update_median_filter_f(&medFilt, up_range);
 	if (up_range_filtered < 0.05F) {
 		up_range_filtered = up_range;
 	}
-	// up_range_filtered = 1.0f;
-	//***************** Manual Startup procedure*************//
-
-	// TODO: shut off engines when crazyflie is on it's back.
-
-	/*    // indicate if top range is hit while it is not flying yet, then
-	   start counting if (keep_flying == false && manual_startup==false &&
-	   up_range <0.2f && on_the_ground == true)
-	    {
-	      manual_startup = true;
-	      time_stamp_manual_startup_command = xTaskGetTickCount();
-	    }
-
-	    // While still on the ground, but indicated that manual startup is
-	   requested, keep checking the time if (keep_flying == false &&
-	   manual_startup == true)
-	    {
-	        uint32_t currentTime = xTaskGetTickCount();
-	        // If 3 seconds has passed, start flying.
-	        if ((currentTime -time_stamp_manual_startup_command) >
-	   MANUAL_STARTUP_TIMEOUT)
-	        {
-	          keep_flying = true;
-	          manual_startup = false;
-	        }
-	    }*/
-
-	// Don't fly if multiranger/updownlaser is not connected or the uprange
-	// is activated
 
 	if (flowdeck_isinit != 0 && multiranger_isinit != 0) {
 		correctly_initialized = true;
@@ -203,11 +175,11 @@ void StateMachine::step() {
 	if (keep_flying == true &&
 	    (!correctly_initialized || up_range < 0.2F ||
 	     (!outbound_ && rssi_beacon_filtered < rssi_beacon_threshold))) {
-		keep_flying = 0;
+		keep_flying = false;
 	}
 #else
-	if (keep_flying == true && (!correctly_initialized || up_range < 0.2f)) {
-		keep_flying = 0;
+	if (keep_flying == true && (!correctly_initialized || up_range < 0.2F)) {
+		keep_flying = false;
 	}
 #endif
 
@@ -251,12 +223,12 @@ void StateMachine::step() {
 			    pos.x, pos.y, rssi_beacon_filtered, rssi_inter_filtered,
 			    rssi_angle_inter_closest, priority, outbound_);
 
-			memcpy(&p_reply.data[1], &rssi_angle, sizeof(float));
+			memcpy(&p_reply.data[1], &rssi_angle, sizeof rssi_angle);
 
 #endif
 
 			// convert yaw rate commands to degrees
-			float vel_w_cmd_convert = vel_w_cmd * 180.0f / (float)M_PI;
+			float vel_w_cmd_convert = rad_to_deg(vel_w_cmd);
 
 			// Convert relative commands to world commands (not necessary
 			// anymore)
@@ -360,7 +332,7 @@ void StateMachine::p2p_callback_handler(P2PPacket *p) {
 	} else {
 		auto rssi_inter = p->rssi;
 		float rssi_angle_inter_ext;
-		memcpy(&rssi_angle_inter_ext, &p->data[1], sizeof(float));
+		memcpy(&rssi_angle_inter_ext, &p->data[1], sizeof p->data[1]);
 
 		rssi_array_other_drones[id_inter_ext] = rssi_inter;
 		time_array_other_drones[id_inter_ext] = timestamp_us();

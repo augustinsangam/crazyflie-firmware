@@ -1,5 +1,5 @@
-#ifndef PI_HPP
-#define PI_HPP
+#ifndef MATH_SUPP_HPP
+#define MATH_SUPP_HPP
 
 #include <cmath>
 
@@ -17,15 +17,4 @@ template <typename T> constexpr T deg_to_rad(T deg) {
 	return deg * pi<T> / T(180);
 }
 
-// static float wrap_to_pi(float number)
-// {
-//   if (number > (float)M_PI) {
-//     return (number - (float)(2 * M_PI));
-//   } else if (number < (float)(-1 * M_PI)) {
-//     return (number + (float)(2 * M_PI));
-//   } else {
-//     return (number);
-//   }
-// }
-
-#endif /* PI_HPP */
+#endif /* MATH_SUPP_HPP */
