@@ -208,7 +208,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 			pos_y_hit = current_pos_y;
 			wanted_angle_hit = wanted_angle;
 
-			wf_.wall_follower_init(0.4F, 0.5, 3);
+			wf_.init(0.4F, 0.5, 3);
 
 			for (int it = 0; it < 8; it++) {
 				correct_heading_array[it] = 0;
@@ -222,7 +222,7 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 		    logicIsCloseTo(wrap_to_pi(current_heading - wanted_angle), 0, 0.1F);
 		if (front_range < ref_distance_from_wall + 0.2F) {
 			cannot_go_to_goal = true;
-			wf_.wall_follower_init(0.4F, 0.5, 3);
+			wf_.init(0.4F, 0.5, 3);
 
 			state = transition(3, &state_start_time); // wall_following
 		}
@@ -366,13 +366,13 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 	} else if (state == 3) { // WALL_FOLLOWING
 		// Get the values from the wallfollowing
 		if (direction == -1) {
-			state_wf = wf_.wall_follower(&temp_vel_x, &temp_vel_y, &temp_vel_w,
-			                             front_range, left_range,
-			                             current_heading, direction);
+			state_wf = wf_.controller(&temp_vel_x, &temp_vel_y, &temp_vel_w,
+			                          front_range, left_range, current_heading,
+			                          direction);
 		} else {
-			state_wf = wf_.wall_follower(&temp_vel_x, &temp_vel_y, &temp_vel_w,
-			                             front_range, right_range,
-			                             current_heading, direction);
+			state_wf = wf_.controller(&temp_vel_x, &temp_vel_y, &temp_vel_w,
+			                          front_range, right_range, current_heading,
+			                          direction);
 		}
 	} else if (state == 4) { // MOVE_AWAY
 

@@ -7,5 +7,4 @@ target_sources(cf2 PRIVATE
 	"./src/exploration/WallFollowingWithAvoid.cpp"
 	"./src/exploration/median_filter.cpp"
 	"./src/main.cpp"
-	"./src/porting.cpp"
-)
+	"./src/porting.cpp")

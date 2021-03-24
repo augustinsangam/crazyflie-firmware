@@ -15,16 +15,16 @@ static int transition(int new_state, float *state_start_time) {
 }
 
 // statemachine functions
-void exploration::WallFollowingWithAvoid::wall_follower_init(
-    float new_ref_distance_from_wall, float max_speed_ref,
-    float starting_local_direction) {
+void exploration::WallFollowingWithAvoid::init(float new_ref_distance_from_wall,
+                                               float max_speed_ref,
+                                               float starting_local_direction) {
 	ref_distance_from_wall_ = new_ref_distance_from_wall;
 	max_speed_ = max_speed_ref;
 	local_direction_ = starting_local_direction;
 	first_run_ = true;
 }
 
-int exploration::WallFollowingWithAvoid::wall_follower(
+int exploration::WallFollowingWithAvoid::controller(
     float *vel_x, float *vel_y, float *vel_w, float front_range,
     float left_range, float right_range, float current_heading,
     uint8_t rssi_other_drone) {
@@ -55,7 +55,7 @@ int exploration::WallFollowingWithAvoid::wall_follower(
 	if (state == 1) { // FORWARD
 		// if front range is close, start wallfollowing
 		if (front_range < ref_distance_from_wall_ + 0.2F) {
-			wf_.wall_follower_init(ref_distance_from_wall_, max_speed_, 3);
+			wf_.init(ref_distance_from_wall_, max_speed_, 3);
 			state = transition(2, &state_start_time_); // wall_following
 		}
 	} else if (state == 2) { // WALL_FOLLOWING
@@ -82,13 +82,11 @@ int exploration::WallFollowingWithAvoid::wall_follower(
 	} else if (state == 2) { // WALL_FOLLOWING
 		// Get the values from the wallfollowing
 		if (local_direction_ == 1) {
-			wf_.wall_follower(&temp_vel_x, &temp_vel_y, &temp_vel_w,
-			                  front_range, right_range, current_heading,
-			                  local_direction_);
+			wf_.controller(&temp_vel_x, &temp_vel_y, &temp_vel_w, front_range,
+			               right_range, current_heading, local_direction_);
 		} else if (local_direction_ == -1) {
-			wf_.wall_follower(&temp_vel_x, &temp_vel_y, &temp_vel_w,
-			                  front_range, left_range, current_heading,
-			                  local_direction_);
+			wf_.controller(&temp_vel_x, &temp_vel_y, &temp_vel_w, front_range,
+			               left_range, current_heading, local_direction_);
 		}
 	} else if (state == 3) { // MOVE_OUT_OF_WAY
 

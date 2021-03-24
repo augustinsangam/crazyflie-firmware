@@ -178,21 +178,19 @@ void StateMachine::step() {
 
 			hover(&setpoint_BG, nominal_height);
 
-#if METHOD == 1 // WALL_FOLLOWING
-                // wall following state machine
-			// state = exploration_controller_.wall_follower(
-			state = exploration_controller_.wall_follower(
+#if METHOD == 1
+			state = exploration_controller_.controller(
 			    &vel_x_cmd, &vel_y_cmd, &vel_w_cmd, front_range, right_range,
 			    heading_rad, 1);
-#elif METHOD == 2 // WALL_FOLLOWER_AND_AVOID
+#elif METHOD == 2
 			if (id_inter_closest > my_id) {
 				rssi_inter_filtered = 140;
 			}
 
-			state = exploration_controller_.wall_follower(
+			state = exploration_controller_.controller(
 			    &vel_x_cmd, &vel_y_cmd, &vel_w_cmd, front_range, left_range,
 			    right_range, heading_rad, rssi_inter_filtered);
-#elif METHOD == 3 // SwWARM GRADIENT BUG ALGORITHM
+#elif METHOD == 3
 			bool priority = false;
 			priority = id_inter_closest > my_id;
 			state = exploration_controller_.controller(
@@ -231,14 +229,12 @@ void StateMachine::step() {
 
 #if METHOD == 1 // wall following
                 // exploration_controller_.init(0.4F, 0.5F, 1);
-					exploration_controller_.wall_follower_init(0.4F, 0.5, 1);
+					exploration_controller_.init(0.4F, 0.5, 1);
 #elif METHOD == 2 // wallfollowing with avoid
 					if (my_id % 2 == 1) {
-						exploration_controller_.wall_follower_init(0.4F, 0.5,
-						                                           -1);
+						exploration_controller_.init(0.4F, 0.5, -1);
 					} else {
-						exploration_controller_.wall_follower_init(0.4F, 0.5,
-						                                           1);
+						exploration_controller_.init(0.4F, 0.5, 1);
 					}
 #elif METHOD == 3 // Swarm Gradient Bug Algorithm
 					if (my_id == 4 || my_id == 8) {

@@ -3,8 +3,8 @@
 #include "porting.hpp"
 #include <cmath>
 
-void exploration::WallFollowing::wall_follower_init(
-    float ref_distance_from_wall, float max_speed, int state) {
+void exploration::WallFollowing::init(float ref_distance_from_wall,
+                                      float max_speed, int state) {
 	ref_distance_from_wall_ = ref_distance_from_wall;
 	max_speed_ = max_speed;
 	first_run_ = true;
@@ -98,15 +98,15 @@ static int transition(int new_state, float *state_start_time) {
 	return new_state;
 }
 
-void exploration::WallFollowing::adjustDistanceWall(float distance_wall_new) {
+void exploration::WallFollowing::adjust_distance_wall(float distance_wall_new) {
 	ref_distance_from_wall_ = distance_wall_new;
 }
 
-int exploration::WallFollowing::wall_follower(float *vel_x, float *vel_y,
-                                              float *vel_w, float front_range,
-                                              float side_range,
-                                              float current_heading,
-                                              float direction_turn) {
+int exploration::WallFollowing::controller(float *vel_x, float *vel_y,
+                                           float *vel_w, float front_range,
+                                           float side_range,
+                                           float current_heading,
+                                           float direction_turn) {
 	direction_ = direction_turn;
 	static float previous_heading = 0;
 	static float angle = 0;
