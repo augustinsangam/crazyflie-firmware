@@ -83,7 +83,7 @@ void StateMachine::init() {
 	init_median_filter_f(&medFilt_3, 13);
 	// p2pRegisterCB(p2pcallbackHandler);
 	auto address = config_block_radio_address();
-	my_id = (uint8_t)((address)&0x00000000ff);
+	my_id = static_cast<uint8_t>(address & 0x00000000ffU);
 
 #if METHOD != 1
 	p_reply.port = 0x00;
@@ -102,21 +102,23 @@ void StateMachine::step() {
 
 	// For every 1 second, reset the RSSI value to high if it hasn't been
 	// received for a while
-	for (uint8_t it = 0; it < 9; it++)
+	for (uint8_t it = 0; it < 9; it++) {
 		if (timestamp_us() >= time_array_other_drones[it] + 1000 * 1000) {
 			time_array_other_drones[it] = timestamp_us() + 1000 * 1000 + 1;
 			rssi_array_other_drones[it] = 150;
-			rssi_angle_array_other_drones[it] = 500.0f;
+			rssi_angle_array_other_drones[it] = 500.0F;
 		}
+	}
 
 	// get RSSI, id and angle of closests crazyflie.
-	auto id_inter_closest = (uint8_t)find_minimum(rssi_array_other_drones, 9);
+	auto id_inter_closest =
+	    static_cast<uint8_t>(find_minimum(rssi_array_other_drones, 9));
 	auto rssi_inter_closest = rssi_array_other_drones[id_inter_closest];
 	auto rssi_angle_inter_closest =
 	    rssi_angle_array_other_drones[id_inter_closest];
 
-	auto rssi_inter_filtered =
-	    (uint8_t)update_median_filter_f(&medFilt_2, (float)rssi_inter_closest);
+	auto rssi_inter_filtered = static_cast<uint8_t>(update_median_filter_f(
+	    &medFilt_2, static_cast<float>(rssi_inter_closest)));
 
 	// checking init of multiranger and flowdeck
 	uint8_t multiranger_isinit = deck_bc_multiranger();
@@ -129,8 +131,8 @@ void StateMachine::step() {
 
 	// t RSSI of beacon
 	rssi_beacon = radio_rssi();
-	auto rssi_beacon_filtered =
-	    (uint8_t)update_median_filter_f(&medFilt_3, (float)rssi_beacon);
+	auto rssi_beacon_filtered = static_cast<uint8_t>(
+	    update_median_filter_f(&medFilt_3, static_cast<float>(rssi_beacon)));
 
 	/* filter rssi
 	static int pos_avg = 0;
@@ -141,12 +143,12 @@ void StateMachine::step() {
 	len, (int)rssi_beacon);*/
 
 	// Select which laser range sensor readings to use
-	if (multiranger_isinit) {
-		front_range = (float)range_front() / 1000.0f;
-		right_range = (float)range_right() / 1000.0f;
-		left_range = (float)range_left() / 1000.0f;
-		back_range = (float)range_back() / 1000.0f;
-		up_range = (float)range_up() / 1000.0f;
+	if (multiranger_isinit != 0) {
+		front_range = range_front() / 1000.0F;
+		right_range = range_right() / 1000.0F;
+		left_range = range_left() / 1000.0F;
+		back_range = range_back() / 1000.0F;
+		up_range = range_up() / 1000.0F;
 	}
 
 	// Get position estimate of kalman filter
@@ -159,7 +161,7 @@ void StateMachine::step() {
 
 	// Filtere uprange, since it sometimes gives a low spike that
 	auto up_range_filtered = update_median_filter_f(&medFilt, up_range);
-	if (up_range_filtered < 0.05f) {
+	if (up_range_filtered < 0.05F) {
 		up_range_filtered = up_range;
 	}
 	// up_range_filtered = 1.0f;
@@ -192,14 +194,14 @@ void StateMachine::step() {
 	// Don't fly if multiranger/updownlaser is not connected or the uprange
 	// is activated
 
-	if (flowdeck_isinit && multiranger_isinit) {
+	if (flowdeck_isinit != 0 && multiranger_isinit != 0) {
 		correctly_initialized = true;
 	}
 
 #if METHOD == 3
 	uint8_t rssi_beacon_threshold = 41;
 	if (keep_flying == true &&
-	    (!correctly_initialized || up_range < 0.2f ||
+	    (!correctly_initialized || up_range < 0.2F ||
 	     (!outbound_ && rssi_beacon_filtered < rssi_beacon_threshold))) {
 		keep_flying = 0;
 	}
@@ -231,8 +233,7 @@ void StateMachine::step() {
 			state = exploration_controller_.wall_follower(
 			    &vel_x_cmd, &vel_y_cmd, &vel_w_cmd, front_range, right_range,
 			    heading_rad, 1);
-#endif
-#if METHOD == 2 // WALL_FOLLOWER_AND_AVOID
+#elif METHOD == 2 // WALL_FOLLOWER_AND_AVOID
 			if (id_inter_closest > my_id) {
 				rssi_inter_filtered = 140;
 			}
@@ -240,22 +241,15 @@ void StateMachine::step() {
 			state = exploration_controller_.wall_follower(
 			    &vel_x_cmd, &vel_y_cmd, &vel_w_cmd, front_range, left_range,
 			    right_range, heading_rad, rssi_inter_filtered);
-#endif
-#if METHOD == 3 // SwWARM GRADIENT BUG ALGORITHM
+#elif METHOD == 3 // SwWARM GRADIENT BUG ALGORITHM
 
 			bool priority = false;
-			if (id_inter_closest > my_id) {
-				priority = true;
-			} else {
-				priority = false;
-			}
-			// TODO make outbound depended on battery.
+			priority = id_inter_closest > my_id;
 			state = exploration_controller_.controller(
 			    &vel_x_cmd, &vel_y_cmd, &vel_w_cmd, &rssi_angle, &state_wf_,
 			    front_range, left_range, right_range, back_range, heading_rad,
-			    (float)pos.x, (float)pos.y, rssi_beacon_filtered,
-			    rssi_inter_filtered, rssi_angle_inter_closest, priority,
-			    outbound_);
+			    pos.x, pos.y, rssi_beacon_filtered, rssi_inter_filtered,
+			    rssi_angle_inter_closest, priority, outbound_);
 
 			memcpy(&p_reply.data[1], &rssi_angle, sizeof(float));
 
@@ -299,15 +293,15 @@ void StateMachine::step() {
 					}
 #elif METHOD == 3 // Swarm Gradient Bug Algorithm
 					if (my_id == 4 || my_id == 8) {
-						exploration_controller_.init(0.4, 0.5, -0.8);
+						exploration_controller_.init(0.4F, 0.5, -0.8F);
 					} else if (my_id == 2 || my_id == 6) {
-						exploration_controller_.init(0.4, 0.5, 0.8);
+						exploration_controller_.init(0.4F, 0.5, 0.8F);
 					} else if (my_id == 3 || my_id == 7) {
-						exploration_controller_.init(0.4, 0.5, -2.4);
+						exploration_controller_.init(0.4F, 0.5, -2.4F);
 					} else if (my_id == 5 || my_id == 9) {
-						exploration_controller_.init(0.4, 0.5, 2.4);
+						exploration_controller_.init(0.4F, 0.5, 2.4F);
 					} else {
-						exploration_controller_.init(0.4, 0.5, 0.8);
+						exploration_controller_.init(0.4F, 0.5, 0.8F);
 					}
 #endif
 				}
@@ -324,8 +318,8 @@ void StateMachine::step() {
 			 *  but the crazyflie  has already taken off
 			 *   then land
 			 */
-			land(&setpoint_BG, 0.2f);
-			if (height < 0.1f) {
+			land(&setpoint_BG, 0.2F);
+			if (height < 0.1F) {
 				shut_off_engines(&setpoint_BG);
 				taken_off = false;
 			}

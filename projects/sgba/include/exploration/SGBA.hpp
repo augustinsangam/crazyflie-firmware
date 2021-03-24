@@ -1,5 +1,5 @@
-#ifndef SGBA_HPP
-#define SGBA_HPP
+#ifndef EXPLORATION_SGBA_HPP
+#define EXPLORATION_SGBA_HPP
 
 #include <cstdint>
 
@@ -25,4 +25,4 @@ private:
 
 } // namespace exploration
 
-#endif /* SGBA_HPP */
+#endif /* EXPLORATION_SGBA_HPP */
