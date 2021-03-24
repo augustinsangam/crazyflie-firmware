@@ -6,6 +6,8 @@
 
 #include "exploration/types.hpp"
 
+namespace porting {
+
 void kalman_estimated_pos(exploration::point_t *pos);
 
 void p2p_register_cb(void (*cb)(exploration::P2PPacket *));
@@ -35,5 +37,7 @@ float_t range_left();
 float_t range_back();
 float_t range_right();
 float_t range_up();
+
+} // namespace porting
 
 #endif /* PORTING_HPP */

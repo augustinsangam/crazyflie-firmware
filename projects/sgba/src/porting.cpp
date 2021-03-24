@@ -23,6 +23,8 @@ extern "C" namespace cf {
 #include <usec_time.h>
 } // namespace cf
 
+namespace porting {
+
 void kalman_estimated_pos(exploration::point_t *pos) {
 	cf::estimatorKalmanGetEstimatedPos(reinterpret_cast<cf::point_t *>(pos));
 }
@@ -92,3 +94,5 @@ std::float_t range_right() {
 }
 
 std::float_t range_up() { return cf::rangeGet(cf::rangeDirection_t::rangeUp); }
+
+} // namespace porting

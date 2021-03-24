@@ -94,7 +94,7 @@ static void command_turn_and_adjust(float *vel_y, float *vel_w, float rate,
 
 static int transition(int new_state, float *state_start_time) {
 	*state_start_time =
-	    static_cast<float>(static_cast<double>(timestamp_us()) / 1e6);
+	    static_cast<float>(static_cast<double>(porting::timestamp_us()) / 1e6);
 	return new_state;
 }
 
@@ -111,7 +111,8 @@ int exploration::WallFollowing::controller(float *vel_x, float *vel_y,
 	static float previous_heading = 0;
 	static float angle = 0;
 	static bool around_corner_go_back = false;
-	auto now = static_cast<float>(static_cast<double>(timestamp_us()) / 1e6);
+	auto now =
+	    static_cast<float>(static_cast<double>(porting::timestamp_us()) / 1e6);
 
 	if (first_run_) {
 		previous_heading = current_heading;

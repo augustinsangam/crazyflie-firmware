@@ -65,7 +65,7 @@ void StateMachine::init() {
 	init_median_filter_f(&medFilt, 5);
 	init_median_filter_f(&medFilt_2, 5);
 	init_median_filter_f(&medFilt_3, 13);
-	auto address = config_block_radio_address();
+	auto address = porting::config_block_radio_address();
 	my_id = static_cast<uint8_t>(address & 0x00000000FFU);
 
 #if METHOD != 1
@@ -75,19 +75,21 @@ void StateMachine::init() {
 	p_reply.size = 5;
 #endif
 
-	system_wait_start();
-	delay_ticks(3000);
+	porting::system_wait_start();
+	porting::delay_ticks(3000);
 }
 
 void StateMachine::step() {
 	// some delay before the whole thing starts
-	delay_ticks(10);
+	porting::delay_ticks(10);
 
 	// For every 1 second, reset the RSSI value to high if it hasn't been
 	// received for a while
 	for (uint8_t it = 0; it < 9; it++) {
-		if (timestamp_us() >= time_array_other_drones.at(it) + 1000 * 1000) {
-			time_array_other_drones.at(it) = timestamp_us() + 1000 * 1000 + 1;
+		if (porting::timestamp_us() >=
+		    time_array_other_drones.at(it) + 1000 * 1000) {
+			time_array_other_drones.at(it) =
+			    porting::timestamp_us() + 1000 * 1000 + 1;
 			rssi_array_other_drones.at(it) = 150;
 			rssi_angle_array_other_drones.at(it) = 500.0F;
 		}
@@ -108,32 +110,32 @@ void StateMachine::step() {
 	    &medFilt_2, static_cast<float>(rssi_inter_closest)));
 
 	// checking init of multiranger and flowdeck
-	uint8_t multiranger_isinit = deck_bc_multiranger();
-	uint8_t flowdeck_isinit = deck_bc_flow2();
+	uint8_t multiranger_isinit = porting::deck_bc_multiranger();
+	uint8_t flowdeck_isinit = porting::deck_bc_flow2();
 
 	// get current height and heading
-	auto height = kalman_state_z();
-	float heading_deg = stabilizer_yaw();
+	auto height = porting::kalman_state_z();
+	float heading_deg = porting::stabilizer_yaw();
 	auto heading_rad = deg_to_rad(heading_deg);
 
 #if METHOD == 3
-	rssi_beacon = radio_rssi();
+	rssi_beacon = porting::radio_rssi();
 	auto rssi_beacon_filtered = static_cast<uint8_t>(
 	    update_median_filter_f(&medFilt_3, static_cast<float>(rssi_beacon)));
 #endif
 
 	// Select which laser range sensor readings to use
 	if (multiranger_isinit != 0) {
-		front_range = range_front() / 1000.0F;
-		right_range = range_right() / 1000.0F;
-		left_range = range_left() / 1000.0F;
-		back_range = range_back() / 1000.0F;
-		up_range = range_up() / 1000.0F;
+		front_range = porting::range_front() / 1000.0F;
+		right_range = porting::range_right() / 1000.0F;
+		left_range = porting::range_left() / 1000.0F;
+		back_range = porting::range_back() / 1000.0F;
+		up_range = porting::range_up() / 1000.0F;
 	}
 
 	// Get position estimate of kalman filter
 	point_t pos;
-	kalman_estimated_pos(&pos);
+	porting::kalman_estimated_pos(&pos);
 
 	// Initialize setpoint
 	setpoint_t setpoint_BG;
@@ -199,7 +201,8 @@ void StateMachine::step() {
 			    pos.x, pos.y, rssi_beacon_filtered, rssi_inter_filtered,
 			    rssi_angle_inter_closest, priority, outbound_);
 
-			std::memcpy(&p_reply.data[1], &rssi_angle, sizeof rssi_angle);
+			std::memcpy(&p_reply.data[1], &rssi_angle, // NOLINT
+			            sizeof rssi_angle);
 #endif
 
 			// convert yaw rate commands to degrees
@@ -221,7 +224,8 @@ void StateMachine::step() {
 			 *  but the crazyflie  has not taken off
 			 *   then take off
 			 */
-			if (timestamp_us() >= takeoffdelaytime + 1000 * 1000 * my_id) {
+			if (porting::timestamp_us() >=
+			    takeoffdelaytime + 1000 * 1000 * my_id) {
 
 				take_off(&setpoint_BG, nominal_height);
 				if (height > nominal_height) {
@@ -278,19 +282,19 @@ void StateMachine::step() {
 			 *   then keep engines off
 			 */
 			shut_off_engines(&setpoint_BG);
-			takeoffdelaytime = timestamp_us();
+			takeoffdelaytime = porting::timestamp_us();
 			// on_the_ground = true;
 		}
 	}
 
 #if METHOD != 1
-	if (timestamp_us() >= radioSendBroadcastTime + 1000 * 500) {
-		radiolink_broadcast_packet(&p_reply);
-		radioSendBroadcastTime = timestamp_us();
+	if (porting::timestamp_us() >= radioSendBroadcastTime + 1000 * 500) {
+		porting::radiolink_broadcast_packet(&p_reply);
+		radioSendBroadcastTime = porting::timestamp_us();
 	}
 
 #endif
-	commander_set_point(&setpoint_BG, STATE_MACHINE_COMMANDER_PRI);
+	porting::commander_set_point(&setpoint_BG, STATE_MACHINE_COMMANDER_PRI);
 }
 
 void StateMachine::p2p_callback_handler(P2PPacket *p) {
@@ -309,7 +313,7 @@ void StateMachine::p2p_callback_handler(P2PPacket *p) {
 		            sizeof p->data[1]);                 // NOLINT
 
 		rssi_array_other_drones.at(id_inter_ext) = rssi_inter;
-		time_array_other_drones.at(id_inter_ext) = timestamp_us();
+		time_array_other_drones.at(id_inter_ext) = porting::timestamp_us();
 		rssi_angle_array_other_drones.at(id_inter_ext) = rssi_angle_inter_ext;
 	}
 }

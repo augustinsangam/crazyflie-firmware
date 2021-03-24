@@ -4,7 +4,7 @@
 
 static int transition(int new_state, float *state_start_time) {
 	*state_start_time =
-	    static_cast<float>(static_cast<double>(timestamp_us()) / 1e6);
+	    static_cast<float>(static_cast<double>(porting::timestamp_us()) / 1e6);
 
 	return new_state;
 }
@@ -161,8 +161,8 @@ int exploration::SGBA::controller(float *vel_x, float *vel_y, float *vel_w,
 		overwrite_and_reverse_direction = false;
 		state = 2;
 
-		state_start_time =
-		    static_cast<float>(static_cast<double>(timestamp_us()) / 1e6);
+		state_start_time = static_cast<float>(
+		    static_cast<double>(porting::timestamp_us()) / 1e6);
 		first_run = false;
 	}
 
