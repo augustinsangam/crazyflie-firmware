@@ -1,3 +1,4 @@
+#include "porting.hpp"
 extern "C" {
 #include <FreeRTOS.h>
 #include <task.h>
@@ -10,8 +11,8 @@ extern "C" {
 
 #include "exploration/StateMachine.hpp"
 
-static porting::Porting p(nullptr);      // NOLINT
-static exploration::StateMachine sm(&p); // NOLINT
+static porting::DroneLayer d(nullptr);   // NOLINT
+static exploration::StateMachine sm(&d); // NOLINT
 
 static void p2pCB(P2PPacket *p) {
 	sm.p2p_callback_handler(reinterpret_cast<exploration::P2PPacket *>(p));
