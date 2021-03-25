@@ -1,8 +1,16 @@
+#include "porting.hpp"
+
+#include <cmath>
 #include <cstdint>
 
+namespace fr {
 extern "C" {
 #include <FreeRTOS.h>
-#include <FreeRTOSConfig.h>
+#include <task.h>
+}
+} // namespace fr
+
+extern "C" namespace cf {
 #include <commander.h>
 #include <configblock.h>
 #include <estimator_kalman.h>
@@ -12,83 +20,81 @@ extern "C" {
 #include <range.h>
 #include <stabilizer_types.h>
 #include <system.h>
-#include <task.h>
 #include <usec_time.h>
+} // namespace cf
+
+namespace porting {
+
+void Porting::kalman_estimated_pos(exploration::point_t *pos) {
+	cf::estimatorKalmanGetEstimatedPos(reinterpret_cast<cf::point_t *>(pos));
 }
 
-#include <porting/porting.hpp>
-
-/**
- * Get microsecond-resolution timestamp.
- */
-uint64_t porting::us_timestamp() { return usecTimestamp(); }
-
-uint64_t porting::config_block_get_radio_address() {
-	return configblockGetRadioAddress();
+void Porting::p2p_register_cb(void (*cb)(exploration::P2PPacket *)) {
+	cf::p2pRegisterCB(reinterpret_cast<cf::P2PCallback>(cb));
 }
 
-void porting::system_wait_start() { systemWaitStart(); }
-
-void porting::ticks_delay(uint32_t nTicksToDelay) { vTaskDelay(nTicksToDelay); }
-uint32_t porting::ms_to_ticks(uint16_t ms) { return M2T(ms); }
-
-void porting::commander_set_setpoint(exploration::setpoint_t *setpoint,
-                                     int priority) {
-	commanderSetSetpoint(reinterpret_cast<setpoint_t *>(setpoint), priority);
+void Porting::radiolink_broadcast_packet(exploration::P2PPacket *packet) {
+	cf::radiolinkSendP2PPacketBroadcast(
+	    reinterpret_cast<cf::P2PPacket *>(packet));
 }
 
-void porting::estimator_kalman_get_estimated_pos(exploration::point_t *pos) {
-	estimatorKalmanGetEstimatedPos(reinterpret_cast<point_t *>(pos));
+void Porting::system_wait_start() { cf::systemWaitStart(); }
+
+void Porting::delay_ticks(uint32_t ticks) { fr::vTaskDelay(ticks); }
+
+void Porting::commander_set_point(exploration::setpoint_t *sp, int prio) {
+	cf::commanderSetSetpoint(reinterpret_cast<cf::setpoint_t *>(sp), prio);
 }
 
-bool porting::send_p2p_packet_broadcast(exploration::P2PPacket *p2pp) {
-	return radiolinkSendP2PPacketBroadcast(reinterpret_cast<P2PPacket *>(p2pp));
+std::uint64_t Porting::config_block_radio_address() {
+	return cf::configblockGetRadioAddress();
 }
 
-uint8_t porting::get_deck_bc_multiranger() {
-	paramVarId_t varid = paramGetVarId("deck", "bcMultiranger");
-	return static_cast<uint8_t>(paramGetInt(varid));
+std::uint8_t Porting::deck_bc_multiranger() {
+	auto var_id = cf::paramGetVarId("deck", "bcMultiranger");
+	return static_cast<std::uint8_t>(cf::paramGetInt(var_id));
 }
 
-uint8_t porting::get_deck_bc_flow2() {
-	paramVarId_t varid = paramGetVarId("deck", "bcFlow2");
-	return static_cast<uint8_t>(paramGetUint(varid));
+std::uint8_t Porting::deck_bc_flow2() {
+	auto var_id = cf::paramGetVarId("deck", "bcFlow2");
+	return static_cast<std::uint8_t>(cf::paramGetUint(var_id));
 }
 
-float porting::get_kalman_state_z() {
-	logVarId_t varid = logGetVarId("kalman", "stateZ");
-	return logGetFloat(varid);
+std::uint8_t Porting::radio_rssi() {
+	auto var_id = cf::logGetVarId("radio", "rssi");
+	return *static_cast<std::uint8_t *>(cf::logGetAddress(var_id));
 }
 
-float porting::get_stabilizer_yaw() {
-	logVarId_t varid = logGetVarId("stabilizer", "yaw");
-	return logGetFloat(varid);
+std::float_t Porting::kalman_state_z() {
+	auto var_id = cf::logGetVarId("kalman", "stateZ");
+	return *static_cast<float *>(cf::logGetAddress(var_id));
 }
 
-uint8_t porting::get_radio_rssi() {
-	logVarId_t varid = logGetVarId("radio", "rssi");
-	return static_cast<uint8_t>(logGetFloat(varid));
+std::float_t Porting::stabilizer_yaw() {
+	auto var_id = cf::logGetVarId("stabilizer", "yaw");
+	return *static_cast<float *>(cf::logGetAddress(var_id));
 }
 
-/* Between 0 and 1 */
-float porting::get_front_range() {
-	return rangeGet(rangeDirection_t::rangeFront);
+std::float_t Porting::range_front() {
+	return cf::rangeGet(cf::rangeDirection_t::rangeFront);
 }
 
-/* Between 0 and 1 */
-float porting::get_right_range() {
-	return rangeGet(rangeDirection_t::rangeRight);
+std::float_t Porting::range_left() {
+	return cf::rangeGet(cf::rangeDirection_t::rangeLeft);
 }
 
-/* Between 0 and 1 */
-float porting::get_left_range() {
-	return rangeGet(rangeDirection_t::rangeLeft);
+std::float_t Porting::range_back() {
+	return cf::rangeGet(cf::rangeDirection_t::rangeBack);
 }
 
-/* Between 0 and 1 */
-float porting::get_back_range() {
-	return rangeGet(rangeDirection_t::rangeBack);
+std::float_t Porting::range_right() {
+	return cf::rangeGet(cf::rangeDirection_t::rangeRight);
 }
 
-/* Between 0 and 1 */
-float porting::get_up_range() { return rangeGet(rangeDirection_t::rangeUp); }
+std::float_t Porting::range_up() {
+	return cf::rangeGet(cf::rangeDirection_t::rangeUp);
+}
+
+std::uint64_t timestamp_us() { return fr::usecTimestamp(); }
+
+} // namespace porting
