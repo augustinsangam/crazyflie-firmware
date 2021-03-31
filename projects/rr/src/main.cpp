@@ -7,6 +7,8 @@ extern "C" {
 extern "C" {
 #include <app.h>
 #include <radiolink.h>
+#include "estimator_kalman.h"
+#include "debug.h"
 }
 
 #include "exploration/StateMachine.hpp"
@@ -21,8 +23,19 @@ static void p2pCB(P2PPacket *p) {
 void appMain() {
 	sm.init();
 	::p2pRegisterCB(p2pCB);
+	unsigned int i = 0;
 	for (;;) {
+		i++;
 		::vTaskDelay(10);
 		sm.step();
+		point_t p;
+		estimatorKalmanGetEstimatedPos(&p);
+		if (i % 100 == 0) {
+			DEBUG_PRINT("X %f \t Y %f \t Z %f \n", p.x, p.y, p.z);
+		}
+
+		// if ((i < 100) && (i % 10 == 0)) {
+		// 	estimatorKalmanTaskInit();
+		// }
 	}
 }

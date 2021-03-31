@@ -1,3 +1,5 @@
+#include "stabilizer_types.h"
+#include <string>
 #define DEBUG_MODULE "HELLOWORLD"
 
 extern "C" {
@@ -6,6 +8,7 @@ extern "C" {
 #include <app_channel.h>
 #include <debug.h> /* DEBUG_PRINT */
 #include <task.h>  /* vTaskDelay */
+#include "estimator_kalman.h"
 
 #include <led.h>
 #include <log.h>
@@ -88,6 +91,9 @@ void appMain()
   while (1)
   {
 
+    DEBUG_PRINT("LOOOOOP\n");
+
+
     if (appchannelReceivePacket(&rxPacket, sizeof(rxPacket), 0))
     {
       DEBUG_PRINT("App channel received setLeds: %d\n", (int)rxPacket.setLeds);
@@ -115,8 +121,13 @@ void appMain()
     txPacket.right 	= (uint16_t) logGetUint(idRight);
     txPacket.up 	= (uint16_t)logGetUint(idUp);
 
+	// string s = "BACK " + std::to_string(txPacket.back) + " FRONT " + std::to_string(txPacket.back) + " LEFT " + std::to_string(txPacket.back) + " RIGHT " + std::to_string(txPacket.back) + " UP " + std::to_string(txPacket.back) + "\n";
 
-    DEBUG_PRINT("Sending packets");
+    // DEBUG_PRINT("BACK %u FRONT %u LEFT %u RIGHT%u UP %u\n", txPacket.back, txPacket.front, txPacket.left, txPacket.right, txPacket.up);
+	point_t p;
+	estimatorKalmanGetEstimatedPos(&p);
+	DEBUG_PRINT("X %f \t Y %f \t Z %f \n", p.x, p.y, p.z);
+
 
     appchannelSendPacket(&txPacket, sizeof(txPacket));
   }
