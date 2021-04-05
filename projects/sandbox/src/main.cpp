@@ -1,5 +1,5 @@
 
-#define DEBUG_MODULE "HELLOWORLD"
+#define DEBUG_MODULE "SANDBOX_PROJECT"
 
 // FreeRTOS imports
 extern "C" {
@@ -17,7 +17,7 @@ extern "C" {
 void appMain() {
 	while (true) {
 		DEBUG_PRINT("Setting all leds\n");
-		ledClearAll();
+		ledSetAll();
 		vTaskDelay(M2T(1000));
 		DEBUG_PRINT("Clearing all leds\n");
 		ledClearAll();
