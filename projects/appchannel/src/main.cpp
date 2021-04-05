@@ -19,7 +19,14 @@ extern "C" {
 #include <ctime>
 
 
-enum TxPacketCode{BATTERY=0, TIMESTEMP=1, SPEED=2, POSITION=3, SENSORS=4, OTHERS=5 };
+enum TxPacketCode{
+	BATTERY=0, TIMESTEMP=1, SPEED=2,
+	POSITION=3, SENSORS=4, OTHERS=5
+};
+enum RxPacketCode{
+	START_MISSION=0, END_MISSION=1, RETURN_TO_BASE=2,
+	TAKE_OFF=3, LANDING=4, LED_ON=5, LED_OFF=6
+};
 
 const static float bat671723HS25C[10] = {
     3.00, // 00%
@@ -34,24 +41,8 @@ const static float bat671723HS25C[10] = {
     4.10  // 90%
 };
 
-static std::int32_t pmBatteryChargeFromVoltage(float voltage) {
-	if (voltage < bat671723HS25C[0]) {
-		return 0;
-	}
-
-	if (voltage > bat671723HS25C[9]) {
-		return 9;
-	}
-
-	std::int32_t charge = 0;
-	while (voltage > bat671723HS25C[charge]) {
-		++charge;
-	}
-	return charge;
-}
-
-struct testPacketRX {
-	bool setLeds;
+struct PacketRX {
+	int code;
 } __attribute__((packed));
 
 struct TimestempPacket{
@@ -84,12 +75,77 @@ struct OtherPacket {
 	bool flying, ledOn;
 } __attribute__((packed));
 
+void onReceivePacket(const struct PacketRX& packet,
+	struct OtherPacket otherPacket ){
+	switch (packet.code) {
+	case START_MISSION:
+		DEBUG_PRINT("Start mission received\n");
+		break;
+
+	case END_MISSION:
+		DEBUG_PRINT("End mission received\n");
+		break;
+
+	case RETURN_TO_BASE:
+		DEBUG_PRINT("Return to base received\n");
+		break;
+
+	case TAKE_OFF:
+		DEBUG_PRINT("Take off received\n");
+		break;
+
+	case LANDING:
+		DEBUG_PRINT("Landing received\n");
+		break;
+
+	case LED_ON:
+		DEBUG_PRINT("Led On received\n");
+		ledSetAll();
+		otherPacket.ledOn = true;
+		break;
+
+	case LED_OFF:
+		DEBUG_PRINT("Led Off received\n");
+		ledClearAll();
+		otherPacket.ledOn = false;
+		break;
+
+	default:
+		break;
+	}
+
+
+}
+
+static std::int32_t pmBatteryChargeFromVoltage(float voltage) {
+	if (voltage < bat671723HS25C[0]) {
+		return 0;
+	}
+
+	if (voltage > bat671723HS25C[9]) {
+		return 9;
+	}
+
+	std::int32_t charge = 0;
+	while (voltage > bat671723HS25C[charge]) {
+		++charge;
+	}
+	return charge;
+}
+
+void setPosition(const point_t& p, struct PositionPacket& position ){
+	position.code = POSITION;
+	position.positionX = p.x;
+	position.positionY = p.y;
+	position.positionZ = p.z;
+}
+
 void appMain() {
 	vTaskDelay(M2T(3000));
 
 	ledClearAll();
 
-	struct testPacketRX rxPacket;
+	struct PacketRX rxPacket;
 	struct TimestempPacket timestempPacket;
 	struct SpeedPacket speedPacket;
 	struct PositionPacket positionPacket;
@@ -103,6 +159,14 @@ void appMain() {
 	logVarId_t idFront = logGetVarId("range", "front");
 	logVarId_t idBack = logGetVarId("range", "back");
 
+
+	logVarId_t idPitch = logGetVarId("stabilizer", "pitch");
+    logVarId_t idRoll = logGetVarId("stabilizer", "roll");
+    logVarId_t idThrust = logGetVarId("stabilizer", "thrust");
+	logVarId_t idYaw = logGetVarId("stateEstimate", "yaw");
+
+
+
 	// DEBUG_PRINT("%i", idUp);
 
 	DEBUG_PRINT("Waiting for activation ...\n");
@@ -112,14 +176,8 @@ void appMain() {
 
 		if (appchannelReceivePacket(&rxPacket, sizeof(rxPacket), 0)) {
 			DEBUG_PRINT("App channel received setLeds: %d\n",
-			            (int)rxPacket.setLeds);
-			if (rxPacket.setLeds) {
-				ledSetAll();
-				otherPacket.ledOn = true;
-			} else {
-				ledClearAll();
-				otherPacket.ledOn = false;
-			}
+			            (int)rxPacket.code);
+			onReceivePacket(rxPacket, otherPacket);
 		}
 
 
@@ -146,10 +204,13 @@ void appMain() {
 		// Position data
 		point_t p;
 		estimatorKalmanGetEstimatedPos(&p);
-		positionPacket.code = POSITION;
-		positionPacket.positionX = p.x;
-		positionPacket.positionY = p.y;
-		positionPacket.positionZ = p.z;
+		setPosition(p, positionPacket);
+
+		// tilt data
+		float pitch = logGetFloat(idPitch);
+		float roll = logGetFloat(idRoll);
+		float thrust = logGetFloat(idThrust);
+		float yaw = logGetFloat(idYaw);
 
 
 		// Sensors data
