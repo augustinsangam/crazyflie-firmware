@@ -76,7 +76,7 @@ struct PacketRX {
 
 struct TimestempPacket {
 	uint8_t code;
-	std::int64_t timestamp;
+	int64_t timestamp;
 } __attribute__((packed));
 
 struct SpeedPacket {
@@ -91,7 +91,7 @@ struct PositionPacket {
 
 struct SensorsPacket {
 	uint8_t code;
-	std::uint16_t front, left, back, right, up;
+	uint16_t front, left, back, right, up;
 } __attribute__((packed));
 
 struct BatteryPacket {
@@ -162,10 +162,7 @@ static float pmBatteryChargeFromVoltage(float voltage) {
 }
 
 static int64_t get_timestamp() {
-	const auto p = std::chrono::system_clock::now();
-	return std::chrono::duration_cast<std::chrono::seconds>(
-	           p.time_since_epoch())
-	    .count();
+	return time(nullptr);
 }
 
 void appMain() {
@@ -250,7 +247,7 @@ void appMain() {
 		appchannelSendPacket(&sensors_packet, sizeof(sensors_packet));
 		appchannelSendPacket(&position_packet, sizeof(position_packet));
 		appchannelSendPacket(&battery_packet, sizeof(battery_packet));
-		appchannelSendPacket(&timestamp_packet, sizeof(timestamp_packet));
+		// appchannelSendPacket(&timestamp_packet, sizeof(timestamp_packet));
 		appchannelSendPacket(&speed_packet, sizeof(speed_packet));
 		appchannelSendPacket(&other_packet, sizeof(other_packet));
 	}
