@@ -1,111 +1,141 @@
-#include <cstdint>
 #define DEBUG_MODULE "HELLOWORLD"
 
 extern "C" {
+#include "estimator_kalman.h"
+#include "stabilizer_types.h"
 #include <FreeRTOS.h>
 #include <app.h> /* appMain */
 #include <app_channel.h>
 #include <debug.h> /* DEBUG_PRINT */
-#include <task.h>  /* vTaskDelay */
-#include "stabilizer_types.h"
-#include "estimator_kalman.h"
+#include <task.h> /* vTaskDelay */
 
 #include <led.h>
 #include <log.h>
 #include <pm.h>
 }
 
+#include <array>
+#include <chrono>
 #include <cstdint>
 #include <ctime>
 
-
-enum TxPacketCode{
-	BATTERY=0, TIMESTEMP=1, SPEED=2,
-	POSITION=3, SENSORS=4, OTHERS=5
+enum class TxPacketCode : std::uint8_t {
+	battery = 0,
+	timestamp,
+	speed,
+	position,
+	sensors,
+	others
 };
-enum RxPacketCode{
-	START_MISSION=0, END_MISSION=1, RETURN_TO_BASE=2,
-	TAKE_OFF=3, LANDING=4, LED_ON=5, LED_OFF=6
+
+enum RxPacketCode : uint8_t {
+	start_mission,
+	end_mission,
+	return_to_base,
+	take_off,
+	land,
+	set_led,
+	clear_led
 };
 
-const static float bat671723HS25C[10] = {
-    3.00, // 00%
-    3.78, // 10%
-    3.83, // 20%
-    3.87, // 30%
-    3.89, // 40%
-    3.92, // 50%
-    3.96, // 60%
-    4.00, // 70%
-    4.04, // 80%
-    4.10  // 90%
+enum class DroneState : uint8_t {
+	onTheGround = 0,
+	takingOff,
+	landing,
+	crashed,
+	exploring,
+	standBy,
+	returningToBase
+};
+
+const static std::array battery_thresholds = {
+    3.00F,  // 00%
+    3.60F,  // 05%
+    3.78F,  // 10%
+    3.805F, // 15%
+    3.83F,  // 20%
+    3.85F,  // 25%
+    3.87F,  // 30%
+    3.88F,  // 35%
+    3.89F,  // 40%
+    3.905F, // 45%
+    3.92F,  // 50%
+    3.94F,  // 55%
+    3.96F,  // 60%
+    3.98F,  // 65%
+    4.00F,  // 70%
+    4.02F,  // 75%
+    4.04F,  // 80%
+    4.07F,  // 85%
+    4.10F   // 90%
 };
 
 struct PacketRX {
-	int code;
+	uint8_t code;
 } __attribute__((packed));
 
-struct TimestempPacket{
-	short code;
-	std::uint64_t timestemp;
+struct TimestempPacket {
+	uint8_t code;
+	std::int64_t timestamp;
 } __attribute__((packed));
 
-struct SpeedPacket{
-	short code;
+struct SpeedPacket {
+	uint8_t code;
 	float speed;
 } __attribute__((packed));
 
-struct PositionPacket{
-	short code;
+struct PositionPacket {
+	uint8_t code;
 	float positionX, positionY, positionZ;
 } __attribute__((packed));
 
-struct SensorsPacket{
-	short code;
+struct SensorsPacket {
+	uint8_t code;
 	std::uint16_t front, left, back, right, up;
 } __attribute__((packed));
 
 struct BatteryPacket {
-	short code;
+	uint8_t code;
 	float battery;
 } __attribute__((packed));
 
 struct OtherPacket {
-	short code;
-	bool flying, ledOn;
+	uint8_t code;
+	uint8_t state;
+	bool ledOn;
 } __attribute__((packed));
 
-void onReceivePacket(const struct PacketRX& packet,
-	struct OtherPacket otherPacket ){
+void onReceivePacket(const struct PacketRX &packet,
+                     struct OtherPacket otherPacket) {
 	switch (packet.code) {
-	case START_MISSION:
-		DEBUG_PRINT("Start mission received\n");
+	case RxPacketCode::start_mission:
+		DEBUG_PRINT("Start mission received\n"); // NOLINT
 		break;
 
-	case END_MISSION:
-		DEBUG_PRINT("End mission received\n");
+	case RxPacketCode::end_mission:
+		DEBUG_PRINT("End mission received\n"); // NOLINT
 		break;
 
-	case RETURN_TO_BASE:
-		DEBUG_PRINT("Return to base received\n");
+	case RxPacketCode::return_to_base:
+		DEBUG_PRINT("Return to base received\n"); // NOLINT
 		break;
 
-	case TAKE_OFF:
-		DEBUG_PRINT("Take off received\n");
+	case RxPacketCode::take_off:
+		DEBUG_PRINT("Take off received\n"); // NOLINT
 		break;
 
-	case LANDING:
-		DEBUG_PRINT("Landing received\n");
+	case RxPacketCode::land:
+		DEBUG_PRINT("Land received\n"); // NOLINT
 		break;
 
-	case LED_ON:
-		DEBUG_PRINT("Led On received\n");
+	case RxPacketCode::set_led:
+		DEBUG_PRINT("Set Led received\n"); // NOLINT
 		ledSetAll();
 		otherPacket.ledOn = true;
 		break;
 
-	case LED_OFF:
-		DEBUG_PRINT("Led Off received\n");
+	case RxPacketCode::clear_led:
+		DEBUG_PRINT("Clear led received\n"); // NOLINT
 		ledClearAll();
 		otherPacket.ledOn = false;
 		break;
@@ -113,31 +143,29 @@ void onReceivePacket(const struct PacketRX& packet,
 	default:
 		break;
 	}
-
-
 }
 
-static std::int32_t pmBatteryChargeFromVoltage(float voltage) {
-	if (voltage < bat671723HS25C[0]) {
-		return 0;
+static float pmBatteryChargeFromVoltage(float voltage) {
+	if (voltage < battery_thresholds[0]) {
+		return 0.0F;
 	}
 
-	if (voltage > bat671723HS25C[9]) {
-		return 9;
+	if (voltage > battery_thresholds.back()) {
+		return 100.0F;
 	}
 
-	std::int32_t charge = 0;
-	while (voltage > bat671723HS25C[charge]) {
+	std::size_t charge = 0;
+	while (voltage > battery_thresholds.at(charge)) {
 		++charge;
 	}
-	return charge;
+	return static_cast<float>(charge) * 10.0F / 2.0F;
 }
 
-void setPosition(const point_t& p, struct PositionPacket& position ){
-	position.code = POSITION;
-	position.positionX = p.x;
-	position.positionY = p.y;
-	position.positionZ = p.z;
+static int64_t get_timestamp() {
+	const auto p = std::chrono::system_clock::now();
+	return std::chrono::duration_cast<std::chrono::seconds>(
+	           p.time_since_epoch())
+	    .count();
 }
 
 void appMain() {
@@ -145,95 +173,85 @@ void appMain() {
 
 	ledClearAll();
 
-	struct PacketRX rxPacket;
-	struct TimestempPacket timestempPacket;
-	struct SpeedPacket speedPacket;
-	struct PositionPacket positionPacket;
-	struct SensorsPacket sensorsPacket;
-	struct BatteryPacket batteryPacket;
-	struct OtherPacket otherPacket;
+	PacketRX rx_packet{};
+	TimestempPacket timestamp_packet{};
+	SpeedPacket speed_packet{};
+	PositionPacket position_packet{};
+	SensorsPacket sensors_packet{};
+	BatteryPacket battery_packet{};
+	OtherPacket other_packet{};
 
-	logVarId_t idUp = logGetVarId("range", "up");
-	logVarId_t idLeft = logGetVarId("range", "left");
-	logVarId_t idRight = logGetVarId("range", "right");
-	logVarId_t idFront = logGetVarId("range", "front");
-	logVarId_t idBack = logGetVarId("range", "back");
+	logVarId_t id_up = logGetVarId("range", "up");       // NOLINT
+	logVarId_t id_left = logGetVarId("range", "left");   // NOLINT
+	logVarId_t id_right = logGetVarId("range", "right"); // NOLINT
+	logVarId_t id_front = logGetVarId("range", "front"); // NOLINT
+	logVarId_t id_back = logGetVarId("range", "back");   // NOLINT
 
-
-	logVarId_t idPitch = logGetVarId("stabilizer", "pitch");
-    logVarId_t idRoll = logGetVarId("stabilizer", "roll");
-    logVarId_t idThrust = logGetVarId("stabilizer", "thrust");
-	logVarId_t idYaw = logGetVarId("stateEstimate", "yaw");
-
-
-
-	// DEBUG_PRINT("%i", idUp);
-
-	DEBUG_PRINT("Waiting for activation ...\n");
+	logVarId_t id_pitch = logGetVarId("stabilizer", "pitch");   // NOLINT
+	logVarId_t id_roll = logGetVarId("stabilizer", "roll");     // NOLINT
+	logVarId_t id_thrust = logGetVarId("stabilizer", "thrust"); // NOLINT
+	logVarId_t id_yaw = logGetVarId("stateEstimate", "yaw");    // NOLINT
 
 	for (;;) {
-		vTaskDelay(M2T(10));
 
-		if (appchannelReceivePacket(&rxPacket, sizeof(rxPacket), 0)) {
-			DEBUG_PRINT("App channel received setLeds: %d\n",
-			            (int)rxPacket.code);
-			onReceivePacket(rxPacket, otherPacket);
+		vTaskDelay(M2T(1000));
+
+		if (appchannelReceivePacket(&rx_packet, sizeof(rx_packet), 0) != 0) {
+			DEBUG_PRINT("App channel received code: %d\n", // NOLINT
+			            rx_packet.code);
+			onReceivePacket(rx_packet, other_packet);
 		}
 
-
 		// Others data
-		otherPacket.code = OTHERS;
-		otherPacket.flying = false;
-
+		other_packet.code = static_cast<uint8_t>(TxPacketCode::others);
+		other_packet.state = static_cast<uint8_t>(DroneState::onTheGround);
 
 		// speed data
-		speedPacket.code = SPEED;
-		speedPacket.speed = 0.0;
+		speed_packet.code = static_cast<uint8_t>(TxPacketCode::speed);
+		speed_packet.speed = 0.0;
 
 		// timestemp data
-
-		timestempPacket.code = TIMESTEMP;
-		timestempPacket.timestemp = std::time(nullptr);
+		timestamp_packet.code = static_cast<uint8_t>(TxPacketCode::timestamp);
+		timestamp_packet.timestamp = get_timestamp();
 
 		// Battery data
-		batteryPacket.code = BATTERY;
-		batteryPacket.battery =
-		pmBatteryChargeFromVoltage(pmGetBatteryVoltage()) * 10;
-
+		battery_packet.code = static_cast<uint8_t>(TxPacketCode::battery);
+		battery_packet.battery =
+		    pmBatteryChargeFromVoltage(pmGetBatteryVoltage());
 
 		// Position data
 		point_t p;
 		estimatorKalmanGetEstimatedPos(&p);
-		setPosition(p, positionPacket);
+		position_packet.code = static_cast<uint8_t>(TxPacketCode::position);
+		position_packet.positionX = p.x;
+		position_packet.positionY = p.y;
+		position_packet.positionZ = p.z;
 
-		// tilt data
-		float pitch = logGetFloat(idPitch);
-		float roll = logGetFloat(idRoll);
-		float thrust = logGetFloat(idThrust);
-		float yaw = logGetFloat(idYaw);
-
+		// TODO (sambabal19)
+		// auto pitch = logGetFloat(id_pitch);
+		// auto roll = logGetFloat(id_roll);
+		// auto thrust = logGetFloat(id_thrust);
+		// auto yaw = logGetFloat(id_yaw);
 
 		// Sensors data
-		uint16_t left = logGetUint(idLeft);
-		uint16_t right = logGetUint(idRight);
-		uint16_t front = logGetUint(idFront);
-		uint16_t back = logGetUint(idBack);
-		uint16_t up = logGetUint(idUp);
+		auto left = logGetUint(id_left);
+		auto right = logGetUint(id_right);
+		auto front = logGetUint(id_front);
+		auto back = logGetUint(id_back);
+		auto up = logGetUint(id_up);
 
-		sensorsPacket.code = SENSORS;
-		sensorsPacket.back = back;
-		sensorsPacket.front = front;
-		sensorsPacket.left = left;
-		sensorsPacket.right = right;
-		sensorsPacket.up = up;
+		sensors_packet.code = static_cast<uint8_t>(TxPacketCode::sensors);
+		sensors_packet.back = static_cast<uint16_t>(back);
+		sensors_packet.front = static_cast<uint16_t>(front);
+		sensors_packet.left = static_cast<uint16_t>(left);
+		sensors_packet.right = static_cast<uint16_t>(right);
+		sensors_packet.up = static_cast<uint16_t>(up);
 
-		appchannelSendPacket(&sensorsPacket, sizeof(sensorsPacket));
-		appchannelSendPacket(&positionPacket, sizeof(positionPacket));
-		appchannelSendPacket(&batteryPacket, sizeof(batteryPacket));
-		appchannelSendPacket(&timestempPacket, sizeof(timestempPacket));
-		appchannelSendPacket(&speedPacket, sizeof(speedPacket));
-		appchannelSendPacket(&otherPacket, sizeof(otherPacket));
-		vTaskDelay(M2T(1000));
-		vTaskDelay(M2T(10));
+		appchannelSendPacket(&sensors_packet, sizeof(sensors_packet));
+		appchannelSendPacket(&position_packet, sizeof(position_packet));
+		appchannelSendPacket(&battery_packet, sizeof(battery_packet));
+		appchannelSendPacket(&timestamp_packet, sizeof(timestamp_packet));
+		appchannelSendPacket(&speed_packet, sizeof(speed_packet));
+		appchannelSendPacket(&other_packet, sizeof(other_packet));
 	}
 }
