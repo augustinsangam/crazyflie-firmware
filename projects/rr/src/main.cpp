@@ -81,18 +81,16 @@ void appMain() {
 	sm.init();
 	::p2pRegisterCB(p2pCB);
 
-	unsigned int i = 0;
 	PacketRX rx_packet{};
 
-	for (;;) {
+	for (std::uint32_t i = 0;; ++i) {
 		::vTaskDelay(M2T(10));
 		sm.step();
-		i++;
 		if (i % 100 == 0) {
-			DEBUG_PRINT("Sending all packets\n"); // NOLINT
+			// DEBUG_PRINT("Sending all packets\n"); // NOLINT
 			send_all_packets(sm);
 		}
-		if (appchannelReceivePacket(&rx_packet, sizeof(rx_packet), 0) != 0) {
+		if (appchannelReceivePacket(&rx_packet, sizeof rx_packet, 0) != 0) {
 			DEBUG_PRINT("App channel received code: %d\n", // NOLINT
 			            (int)rx_packet.code);
 			onReceivePacket(rx_packet);

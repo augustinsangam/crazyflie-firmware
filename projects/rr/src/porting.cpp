@@ -33,6 +33,11 @@ void DroneLayer::kalman_estimated_pos(exploration::point_t *pos) {
 	cf::estimatorKalmanGetEstimatedPos(reinterpret_cast<cf::point_t *>(pos));
 }
 
+bool DroneLayer::kalman_crashed() {
+	auto var_id = cf::paramGetVarId("kalman", "resetEstimation");
+	return cf::paramGetUint(var_id) != 0;
+}
+
 void DroneLayer::radiolink_broadcast_packet(exploration::P2PPacket *packet) {
 	cf::radiolinkSendP2PPacketBroadcast(
 	    reinterpret_cast<cf::P2PPacket *>(packet));
