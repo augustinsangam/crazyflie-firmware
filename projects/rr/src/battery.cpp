@@ -7,7 +7,7 @@ extern "C" {
 #include <array>
 #include <cstdint>
 
-const static std::array battery_thresholds = {
+const static std::array battery_thresholds{
     3.27F, // 0   %
     3.61F, // 5   %
     3.69F, // 10  %
