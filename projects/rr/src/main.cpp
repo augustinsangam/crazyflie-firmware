@@ -78,6 +78,7 @@ void onReceivePacket(const struct PacketRX &packet) {
 }
 
 void appMain() {
+	ledClearAll();
 	sm.init();
 	::p2pRegisterCB(p2pCB);
 

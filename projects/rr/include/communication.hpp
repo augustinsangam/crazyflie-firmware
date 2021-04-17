@@ -7,10 +7,8 @@
 
 enum class TxPacketCode : uint8_t {
 	battery = 0,
-	timestamp,
 	speed,
-	position,
-	sensors,
+	position_and_sensors,
 	others
 };
 
@@ -38,23 +36,15 @@ struct PacketRX {
 	uint8_t code;
 } __attribute__((packed));
 
-struct TimestempPacket {
-	uint8_t code;
-	int64_t timestamp;
-} __attribute__((packed));
-
 struct SpeedPacket {
 	uint8_t code;
 	float speed;
 } __attribute__((packed));
 
-struct PositionPacket {
+struct PositionAndSensorsPacket {
 	uint8_t code;
 	float positionX, positionY, positionZ;
-} __attribute__((packed));
-
-struct SensorsPacket {
-	uint8_t code;
+	float yaw;
 	uint16_t front, left, back, right, up;
 } __attribute__((packed));
 
