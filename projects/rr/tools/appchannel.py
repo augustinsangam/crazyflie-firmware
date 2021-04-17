@@ -59,24 +59,20 @@ class AppchannelTest:
     def _app_packet_received(self, data):
         (code, ) = struct.unpack_from("<B", data, 0)
 
-        if code == 0:
+        if code == 0:  # Battery
             (cd, battery) = struct.unpack("<Bf", data)
-            # print(f"Received : {cd}, Battery : {battery}")
-        elif code == 1:
-            (cd, timestamp) = struct.unpack("<Bq", data)
-            # print(f"Received : {cd}, {timestamp}")
-        elif code == 2:
+            print(f"Received : {cd}, Battery : {battery}")
+        elif code == 1:  # Speed
             (cd, speed) = struct.unpack("<Bf", data)
-            # print(f"Received : {cd}, {speed}")
-        elif code == 3:
-            (cd, positionX, positionY, positionZ) = struct.unpack("<Bfff", data)
-            # print(f"Received : {cd}, {positionX}, {positionY}, {positionZ}")
-        elif code == 4:
-            (cd, front, left, back, right, up) = struct.unpack("<BHHHHH", data)
-            # print(f"Received : {cd}, {front}, {left}, {back}, {right}, {up}")
-        elif code == 5:
+            print(f"Received : {cd}, Speed   : {speed}")
+        elif code == 2:  # Position and sensors
+            (cd, positionX, positionY, positionZ, yaw, front, left,
+             back, right, up) = struct.unpack("<BffffHHHHH", data)
+            print(
+                f"Received : {cd}, X: {positionX}, Y: {positionY}, Z: {positionZ}, Yaw: {yaw}, F: {front}, L: {left}, B: {back}, R: {right}, U: {up}")
+        elif code == 3:  # Others
             (cd, state, ledOn) = struct.unpack("<BB?", data)
-            # print(f"Received : {cd}, {state}, {ledOn}")
+            print(f"Received : {cd}, State   : {state}, LedON: {ledOn}")
             print(f"state {state}")
         else:
             print("Received Unknown code")

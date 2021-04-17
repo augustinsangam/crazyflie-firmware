@@ -17,17 +17,6 @@ extern "C" {
 #include <array>
 #include <cstdint>
 
-static logVarId_t id_up = logGetVarId("range", "up");       // NOLINT
-static logVarId_t id_left = logGetVarId("range", "left");   // NOLINT
-static logVarId_t id_right = logGetVarId("range", "right"); // NOLINT
-static logVarId_t id_front = logGetVarId("range", "front"); // NOLINT
-static logVarId_t id_back = logGetVarId("range", "back");   // NOLINT
-
-static logVarId_t id_pitch = logGetVarId("stabilizer", "pitch");   // NOLINT
-static logVarId_t id_roll = logGetVarId("stabilizer", "roll");     // NOLINT
-static logVarId_t id_thrust = logGetVarId("stabilizer", "thrust"); // NOLINT
-static logVarId_t id_yaw = logGetVarId("stateEstimate", "yaw");    // NOLINT
-
 void send_all_packets(const exploration::StateMachine &sm) {
 
 	SpeedPacket speed_packet{};
@@ -56,6 +45,16 @@ void send_all_packets(const exploration::StateMachine &sm) {
 	position_and_sensors_packet.positionY = p.y;
 	position_and_sensors_packet.positionZ = p.z;
 	// Orientation data
+	logVarId_t id_up = logGetVarId("range", "up");       // NOLINT
+	logVarId_t id_left = logGetVarId("range", "left");   // NOLINT
+	logVarId_t id_right = logGetVarId("range", "right"); // NOLINT
+	logVarId_t id_front = logGetVarId("range", "front"); // NOLINT
+	logVarId_t id_back = logGetVarId("range", "back");   // NOLINT
+
+	logVarId_t id_pitch = logGetVarId("stabilizer", "pitch");   // NOLINT
+	logVarId_t id_roll = logGetVarId("stabilizer", "roll");     // NOLINT
+	logVarId_t id_thrust = logGetVarId("stabilizer", "thrust"); // NOLINT
+	logVarId_t id_yaw = logGetVarId("stateEstimate", "yaw");    // NOLINT
 	position_and_sensors_packet.yaw = logGetFloat(id_yaw);
 	// Sensors data
 	position_and_sensors_packet.back =
