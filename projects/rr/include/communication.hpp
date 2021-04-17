@@ -59,6 +59,6 @@ struct OtherPacket {
 	bool ledOn;
 } __attribute__((packed));
 
-void send_all_packets(const exploration::StateMachine &sm);
+void send_all_packets(const exploration::StateMachine &sm, bool led_is_on);
 
 #endif // !COMMUNICATION_HPP

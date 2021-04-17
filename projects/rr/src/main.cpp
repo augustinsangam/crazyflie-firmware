@@ -24,9 +24,9 @@ static void p2pCB(P2PPacket *p) {
 	sm.p2p_callback_handler(reinterpret_cast<exploration::P2PPacket *>(p));
 }
 
-static bool led_is_on = false;
 
-void onReceivePacket(const struct PacketRX &packet) {
+void onReceivePacket(const struct PacketRX &packet, bool* led_is_on) {
+
 	switch (packet.code) {
 	case RxPacketCode::start_mission: {
 		DEBUG_PRINT("Start mission received\n"); // NOLINT
@@ -61,14 +61,14 @@ void onReceivePacket(const struct PacketRX &packet) {
 	case RxPacketCode::set_led: {
 		DEBUG_PRINT("Set Led received\n"); // NOLINT
 		ledSetAll();
-		led_is_on = true;
+		*led_is_on = true;
 		break;
 	}
 
 	case RxPacketCode::clear_led: {
 		DEBUG_PRINT("Clear led received\n"); // NOLINT
 		ledClearAll();
-		led_is_on = false;
+		*led_is_on = false;
 		break;
 	}
 
@@ -79,6 +79,8 @@ void onReceivePacket(const struct PacketRX &packet) {
 
 void appMain() {
 	ledClearAll();
+	bool led_is_on = false;
+
 	sm.init();
 	::p2pRegisterCB(p2pCB);
 
@@ -89,12 +91,12 @@ void appMain() {
 		sm.step();
 		if (i % 100 == 0) {
 			// DEBUG_PRINT("Sending all packets\n"); // NOLINT
-			send_all_packets(sm);
+			send_all_packets(sm, led_is_on);
 		}
 		if (appchannelReceivePacket(&rx_packet, sizeof rx_packet, 0) != 0) {
 			DEBUG_PRINT("App channel received code: %d\n", // NOLINT
 			            (int)rx_packet.code);
-			onReceivePacket(rx_packet);
+			onReceivePacket(rx_packet, &led_is_on);
 		}
 	}
 }

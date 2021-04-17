@@ -17,7 +17,7 @@ extern "C" {
 #include <array>
 #include <cstdint>
 
-void send_all_packets(const exploration::StateMachine &sm) {
+void send_all_packets(const exploration::StateMachine &sm, bool led_is_on) {
 
 	SpeedPacket speed_packet{};
 	PositionAndSensorsPacket position_and_sensors_packet{};
@@ -27,6 +27,7 @@ void send_all_packets(const exploration::StateMachine &sm) {
 	// Others data
 	other_packet.code = static_cast<uint8_t>(TxPacketCode::others);
 	other_packet.state = static_cast<uint8_t>(sm.get_state());
+	other_packet.ledOn = led_is_on;
 
 	// speed data
 	speed_packet.code = static_cast<uint8_t>(TxPacketCode::speed);
