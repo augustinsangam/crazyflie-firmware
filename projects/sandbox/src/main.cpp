@@ -15,6 +15,7 @@ extern "C" {
 }
 
 void appMain() {
+  // Toggle LEDs indefinitely
 	for (;;) {
 		DEBUG_PRINT("Setting all leds\n");
 		ledSetAll();

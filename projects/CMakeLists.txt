@@ -66,8 +66,9 @@ endfunction()
 
 cf_executable(cf2)
 
-if (NOT DEFINED CF2_PROJECT)
-	message(FATAL_ERROR "You SHOULD specify the variable CF2_PROJECT")
+if (NOT DEFINED CF2_PROJECT OR CF2_PROJECT STREQUAL "")
+	message(WARNING "Defaulting to RR project")
+	set(CF2_PROJECT "rr")
 endif()
 
 add_subdirectory("${CF2_PROJECT}")
