@@ -15,11 +15,12 @@ extern "C" {
 }
 
 void appMain() {
-	while (true) {
+	for (;;) {
 		DEBUG_PRINT("Setting all leds\n");
 		ledSetAll();
 		vTaskDelay(M2T(1000));
 		DEBUG_PRINT("Clearing all leds\n");
 		ledClearAll();
+		vTaskDelay(M2T(1000));
 	}
 }

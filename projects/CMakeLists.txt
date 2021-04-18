@@ -65,9 +65,9 @@ function(cf_executable target)
 endfunction()
 
 cf_executable(cf2)
-# add_subdirectory("./cdr")
-add_subdirectory("./rr")
-# add_subdirectory("./time")
-# add_subdirectory("./sandbox")
-# add_subdirectory("./appchannel")
-# add_subdirectory("./sgba")
+
+if (NOT DEFINED CF2_PROJECT)
+	message(FATAL_ERROR "You SHOULD specify the variable CF2_PROJECT")
+endif()
+
+add_subdirectory("${CF2_PROJECT}")
