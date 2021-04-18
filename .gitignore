@@ -64,3 +64,4 @@ CMakeUserPresets.json
 build/
 build-*/
 .cache/
+out/
