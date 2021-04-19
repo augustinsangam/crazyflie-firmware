@@ -17,6 +17,10 @@ extern "C" {
 #include "communication.hpp"
 #include <exploration/StateMachine.hpp>
 
+static constexpr unsigned int DELAY_PER_FSM_LOOP = 10U;
+static constexpr unsigned int DELAY_PER_STATE_UPDATE =
+    500U / DELAY_PER_FSM_LOOP;
+
 static porting::DroneLayer d(nullptr);   // NOLINT
 static exploration::StateMachine sm(&d); // NOLINT
 
@@ -24,8 +28,7 @@ static void p2pCB(P2PPacket *p) {
 	sm.p2p_callback_handler(reinterpret_cast<exploration::P2PPacket *>(p));
 }
 
-
-void onReceivePacket(const struct PacketRX &packet, bool* led_is_on) {
+void onReceivePacket(const struct PacketRX &packet, bool *led_is_on) {
 
 	switch (packet.code) {
 	case RxPacketCode::start_mission: {
@@ -87,9 +90,9 @@ void appMain() {
 	PacketRX rx_packet{};
 
 	for (std::uint32_t i = 0;; ++i) {
-		::vTaskDelay(M2T(10));
+		::vTaskDelay(M2T(DELAY_PER_FSM_LOOP));
 		sm.step();
-		if (i % 100 == 0) {
+		if (i % DELAY_PER_STATE_UPDATE == 0) {
 			// DEBUG_PRINT("Sending all packets\n"); // NOLINT
 			send_all_packets(sm, led_is_on);
 		}

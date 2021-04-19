@@ -1,6 +1,7 @@
 #include "battery.hpp"
 
 extern "C" {
+#include <log.h>
 #include <pm.h>
 }
 
@@ -48,5 +49,14 @@ static float pmBatteryChargeFromVoltage(float voltage) {
 }
 
 float getBatteryPercentage() {
-	return pmBatteryChargeFromVoltage(pmGetBatteryVoltage());
+	unsigned int motor1 = logGetUint(logGetVarId("motor", "m1")); // NOLINT
+	unsigned int motor2 = logGetUint(logGetVarId("motor", "m2")); // NOLINT
+	unsigned int motor3 = logGetUint(logGetVarId("motor", "m3")); // NOLINT
+	unsigned int motor4 = logGetUint(logGetVarId("motor", "m4")); // NOLINT
+
+	float voltage = (motor1 + motor2 + motor3 + motor4) < 1000
+	                    ? pmGetBatteryVoltage()
+	                    : pmGetBatteryVoltage() + 0.4F;
+
+	return pmBatteryChargeFromVoltage(voltage);
 }

@@ -31,6 +31,11 @@ void send_all_packets(const exploration::StateMachine &sm, bool led_is_on) {
 
 	// speed data
 	speed_packet.code = static_cast<uint8_t>(TxPacketCode::speed);
+	// unsigned int motor1 = logGetUint(logGetVarId("motor", "m1")); // NOLINT
+	// unsigned int motor2 = logGetUint(logGetVarId("motor", "m2")); // NOLINT
+	// unsigned int motor3 = logGetUint(logGetVarId("motor", "m3")); // NOLINT
+	// unsigned int motor4 = logGetUint(logGetVarId("motor", "m4")); // NOLINT
+	// DEBUG_PRINT("%d %d %d %d\n", motor1, motor2, motor3, motor4); // NOLINT
 	speed_packet.speed = 0.0;
 
 	// Battery data
