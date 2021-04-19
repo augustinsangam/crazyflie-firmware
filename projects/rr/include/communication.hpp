@@ -1,6 +1,7 @@
 #ifndef COMMUNICATION_HPP
 #define COMMUNICATION_HPP
 
+#include "stabilizer_types.h"
 #include <array>
 #include <cstdint>
 #include <exploration/StateMachine.hpp>
@@ -59,6 +60,22 @@ struct OtherPacket {
 	bool ledOn;
 } __attribute__((packed));
 
-void send_all_packets(const exploration::StateMachine &sm, bool led_is_on);
+class Communication {
+
+public:
+	Communication(exploration::StateMachine *sm, bool led_is_on)
+	    : sm_{sm}, led_is_on_{led_is_on} {}
+
+	void send_all_packets();
+	void on_receive_packet(const PacketRX &packet);
+	void update_speed();
+
+private:
+	exploration::StateMachine *sm_;
+	bool led_is_on_;
+	point_t current_pos_;
+	float speed_;
+	static constexpr float DELAY_PER_SPEED_UPDATE = 0.01F;
+};
 
 #endif // !COMMUNICATION_HPP

@@ -1,3 +1,4 @@
+#include <cmath>
 extern "C" {
 #include "estimator_kalman.h"
 #include "stabilizer_types.h"
@@ -17,7 +18,7 @@ extern "C" {
 #include <array>
 #include <cstdint>
 
-void send_all_packets(const exploration::StateMachine &sm, bool led_is_on) {
+void Communication::send_all_packets() {
 
 	SpeedPacket speed_packet{};
 	PositionAndSensorsPacket position_and_sensors_packet{};
@@ -26,17 +27,12 @@ void send_all_packets(const exploration::StateMachine &sm, bool led_is_on) {
 
 	// Others data
 	other_packet.code = static_cast<uint8_t>(TxPacketCode::others);
-	other_packet.state = static_cast<uint8_t>(sm.get_state());
-	other_packet.ledOn = led_is_on;
+	other_packet.state = static_cast<uint8_t>(sm_->get_state());
+	other_packet.ledOn = led_is_on_;
 
 	// speed data
 	speed_packet.code = static_cast<uint8_t>(TxPacketCode::speed);
-	// unsigned int motor1 = logGetUint(logGetVarId("motor", "m1")); // NOLINT
-	// unsigned int motor2 = logGetUint(logGetVarId("motor", "m2")); // NOLINT
-	// unsigned int motor3 = logGetUint(logGetVarId("motor", "m3")); // NOLINT
-	// unsigned int motor4 = logGetUint(logGetVarId("motor", "m4")); // NOLINT
-	// DEBUG_PRINT("%d %d %d %d\n", motor1, motor2, motor3, motor4); // NOLINT
-	speed_packet.speed = 0.0;
+	speed_packet.speed = speed_;
 
 	// Battery data
 	battery_packet.code = static_cast<uint8_t>(TxPacketCode::battery);
@@ -86,4 +82,77 @@ void send_all_packets(const exploration::StateMachine &sm, bool led_is_on) {
 	appchannelSendPacket(&battery_packet, sizeof(battery_packet));
 	appchannelSendPacket(&speed_packet, sizeof(speed_packet));
 	appchannelSendPacket(&other_packet, sizeof(other_packet));
+}
+
+void Communication::on_receive_packet(const PacketRX &packet) {
+
+	switch (packet.code) {
+	case RxPacketCode::start_mission: {
+		DEBUG_PRINT("Start mission received\n"); // NOLINT
+		sm_->start_mission();
+		break;
+	}
+
+	case RxPacketCode::end_mission: {
+		DEBUG_PRINT("End mission received\n"); // NOLINT
+		sm_->end_mission();
+		break;
+	}
+
+	case RxPacketCode::return_to_base: {
+		DEBUG_PRINT("Return to base received\n"); // NOLINT
+		sm_->return_to_base();
+		break;
+	}
+
+	case RxPacketCode::take_off: {
+		DEBUG_PRINT("Take off received\n"); // NOLINT
+		sm_->take_off_robot();
+		break;
+	}
+
+	case RxPacketCode::land: {
+		DEBUG_PRINT("Land received\n"); // NOLINT
+		sm_->land_robot();
+		break;
+	}
+
+	case RxPacketCode::set_led: {
+		DEBUG_PRINT("Set Led received\n"); // NOLINT
+		ledSetAll();
+		led_is_on_ = true;
+		break;
+	}
+
+	case RxPacketCode::clear_led: {
+		DEBUG_PRINT("Clear led received\n"); // NOLINT
+		ledClearAll();
+		led_is_on_ = false;
+		break;
+	}
+
+	default:
+		break;
+	}
+}
+
+void Communication::update_speed() {
+	unsigned int motor1 = logGetUint(logGetVarId("motor", "m1")); // NOLINT
+	unsigned int motor2 = logGetUint(logGetVarId("motor", "m2")); // NOLINT
+	unsigned int motor3 = logGetUint(logGetVarId("motor", "m3")); // NOLINT
+	unsigned int motor4 = logGetUint(logGetVarId("motor", "m4")); // NOLINT
+
+	point_t pos;
+	estimatorKalmanGetEstimatedPos(&pos);
+
+	if ((motor1 + motor2 + motor3 + motor4) == 0) {
+		speed_ = 0.0F;
+		current_pos_ = pos;
+		return;
+	}
+
+	float dx = pos.x - current_pos_.x;
+	float dy = pos.y - current_pos_.y;
+	speed_ = std::sqrt(dx * dx + dy * dy) / DELAY_PER_SPEED_UPDATE;
+	current_pos_ = pos;
 }

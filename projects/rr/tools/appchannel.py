@@ -61,19 +61,19 @@ class AppchannelTest:
 
         if code == 0:  # Battery
             (cd, battery) = struct.unpack("<Bf", data)
-            print(f"Received : {cd}, Battery : {battery}")
+            # print(f"Received : {cd}, Battery : {battery}")
+            # print(f"Battery : {battery}")
         elif code == 1:  # Speed
             (cd, speed) = struct.unpack("<Bf", data)
-            print(f"Received : {cd}, Speed   : {speed}")
+            # print(f"Received : {cd}, Speed   : {speed}")
+            print(f"Speed   : {speed}")
         elif code == 2:  # Position and sensors
             (cd, positionX, positionY, positionZ, yaw, front, left,
              back, right, up) = struct.unpack("<BffffHHHHH", data)
-            print(
-                f"Received : {cd}, X: {positionX}, Y: {positionY}, Z: {positionZ}, Yaw: {yaw}, F: {front}, L: {left}, B: {back}, R: {right}, U: {up}")
+            # print(f"Yaw: {yaw}\tX: {positionX}\tY: {positionY}\tZ: {positionZ}")
         elif code == 3:  # Others
             (cd, state, ledOn) = struct.unpack("<BB?", data)
-            print(f"Received : {cd}, State   : {state}, LedON: {ledOn}")
-            print(f"state {state}")
+            # print(f"Received : {cd}, State   : {state}, LedON: {ledOn}")
         else:
             print("Received Unknown code")
 
