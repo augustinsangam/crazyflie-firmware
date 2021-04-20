@@ -1,0 +1,6 @@
+# Hashes of file build rules.
+a64ccd5e7db726be50476aab7bdb0ff2 CMakeFiles/version_c
+8d0010bc33ec78b3c7f0dda57be6a709 projects/CMakeFiles/cf2_bin
+a1e9a9d56d9e45eb49d44051bad819a6 projects/CMakeFiles/cf2_cload
+e098a104328959a6ef3e3d4a98e95124 projects/cf2.bin
+6d21883b081efb3195fc4c51509f605f version.c

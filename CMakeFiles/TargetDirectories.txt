@@ -1,0 +1,13 @@
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/CMakeFiles/rebuild_cache.dir
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/CMakeFiles/edit_cache.dir
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/CMakeFiles/stm32f4xx.dir
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/CMakeFiles/dw1000.dir
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/CMakeFiles/arm_math.dir
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/CMakeFiles/cf2.dir
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/CMakeFiles/version_c.dir
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/projects/CMakeFiles/rebuild_cache.dir
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/projects/CMakeFiles/edit_cache.dir
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/projects/CMakeFiles/cf2_cload.dir
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/projects/CMakeFiles/cf2_bin.dir
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/projects/cdr/CMakeFiles/rebuild_cache.dir
+/home/gougoush/Desktop/School/INF3995/crazyflie-project/firmware/projects/cdr/CMakeFiles/edit_cache.dir
