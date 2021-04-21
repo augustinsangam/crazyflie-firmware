@@ -81,9 +81,8 @@ std::float_t DroneLayer::stabilizer_yaw() {
 }
 
 std::float_t DroneLayer::get_battery_level() {
-	// TODO ()
-	// return getBatteryPercentage() / 100.0F;
 	return 1.0F;
+	// return getBatteryPercentage() / 100.0F;
 }
 
 std::float_t DroneLayer::range_front() {
