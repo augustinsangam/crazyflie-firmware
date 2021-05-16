@@ -5,4 +5,4 @@
 [submodule "projects/rr/exploration"]
 	branch = master
 	path = projects/rr/exploration
-	url = git@gitlab.com:polytechnique-montr-al/inf3995/20211/equipe-203/exploration.git
+	url = git@github.com:augustinsangam/crazyflie-exploration.git
