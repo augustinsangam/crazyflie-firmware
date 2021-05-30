@@ -1,2 +1,0 @@
-/usr/bin/ar qc libdw1000.a  CMakeFiles/dw1000.dir/cf_fw/vendor/libdw1000/src/libdw1000.c.o CMakeFiles/dw1000.dir/cf_fw/vendor/libdw1000/src/libdw1000Spi.c.o
-/usr/bin/ranlib libdw1000.a
